@@ -20,16 +20,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto relative shadow-2xl">
             {/* Header */}
-            <header className="p-6 pb-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-10 flex justify-between items-center">
+            <header className="p-8 pb-4 sticky top-0 bg-slate-50/90 backdrop-blur-2xl z-40 flex justify-between items-end">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 bg-primary-500 rounded-full animate-pulse-subtle"></div>
+                        <span className="text-[10px] text-primary-500 font-black tracking-[0.2em] uppercase">Sistema En Línea</span>
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter">
                         Miss Ventas
-                        <span className="text-[10px] bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full ml-2 align-middle">v1.1</span>
+                        <span className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded-lg ml-2 align-middle font-bold">V1.2</span>
                     </h1>
-                    <p className="text-xs text-primary-500 font-medium tracking-wider uppercase">Local-First PWA</p>
                 </div>
-                <button className="p-3 bg-white shadow-sm rounded-2xl text-slate-400">
-                    <Menu size={20} />
+                <button className="p-4 bg-white shadow-premium rounded-2xl text-slate-900 border border-slate-100 active:scale-90 transition-transform">
+                    <Menu size={22} strokeWidth={2.5} />
                 </button>
             </header>
 

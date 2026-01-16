@@ -44,82 +44,89 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-md rounded-[3rem] p-8 space-y-6 animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-slate-800">Nuevo Producto</h3>
-                    <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-400">
-                        <X size={20} />
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20">
+                <div className="flex justify-between items-center px-2">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Nuevo Ítem</h3>
+                        <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">Inventario Real</p>
+                    </div>
+                    <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-900 transition-colors">
+                        <X size={20} strokeWidth={3} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Photo Upload */}
                     <div className="flex justify-center">
-                        <label className="relative w-32 h-32 bg-slate-100 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden group">
+                        <label className="relative w-40 h-40 bg-slate-50 rounded-[2.5rem] border-3 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-primary-400 transition-all duration-500">
                             {foto ? (
-                                <img src={foto} alt="Preview" className="w-full h-full object-cover" />
+                                <img src={foto} alt="Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                             ) : (
                                 <>
-                                    <Camera size={32} className="text-slate-300 group-hover:text-primary-400 transition-colors" />
-                                    <span className="text-[10px] text-slate-400 mt-2 font-medium">SUBIR FOTO</span>
+                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-300 group-hover:text-primary-500 transition-colors mb-2">
+                                        <Camera size={24} />
+                                    </div>
+                                    <span className="text-[9px] text-slate-400 font-black tracking-widest uppercase">Cargar Imagen</span>
                                 </>
                             )}
                             <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                         </label>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 ml-2">NOMBRE DEL PRODUCTO</label>
-                        <input
-                            type="text"
-                            required
-                            className="input-field w-full"
-                            placeholder="Ej. Taza Personalizada"
-                            value={nombre}
-                            onChange={(e) => setNombre(e.target.value)}
-                        />
-                    </div>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Nombre del Producto</label>
+                            <input
+                                type="text"
+                                required
+                                className="input-field"
+                                placeholder="Ej. Bolso de Piel"
+                                value={nombre}
+                                onChange={(e) => setNombre(e.target.value)}
+                            />
+                        </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-2">COSTO ($)</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Costo</label>
+                                <input
+                                    type="number"
+                                    required
+                                    className="input-field"
+                                    placeholder="$0"
+                                    value={costo}
+                                    onChange={(e) => setCosto(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Venta</label>
+                                <input
+                                    type="number"
+                                    required
+                                    className="input-field font-black text-primary-600"
+                                    placeholder="$0"
+                                    value={precio}
+                                    onChange={(e) => setPrecio(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Unidades Stock</label>
                             <input
                                 type="number"
                                 required
-                                className="input-field w-full"
-                                placeholder="0.00"
-                                value={costo}
-                                onChange={(e) => setCosto(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-2">PRECIO VTA ($)</label>
-                            <input
-                                type="number"
-                                required
-                                className="input-field w-full"
-                                placeholder="0.00"
-                                value={precio}
-                                onChange={(e) => setPrecio(e.target.value)}
+                                className="input-field"
+                                value={stock}
+                                onChange={(e) => setStock(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 ml-2">CANTIDAD EN STOCK</label>
-                        <input
-                            type="number"
-                            required
-                            className="input-field w-full"
-                            value={stock}
-                            onChange={(e) => setStock(e.target.value)}
-                        />
-                    </div>
-
-                    <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 mt-4">
-                        <Save size={20} />
-                        Guardar Producto
+                    <button type="submit" className="btn-primary w-full shadow-2xl hover:translate-y-[-2px]">
+                        <Save size={20} strokeWidth={3} />
+                        Finalizar Registro
                     </button>
                 </form>
             </div>

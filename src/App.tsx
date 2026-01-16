@@ -98,42 +98,37 @@ const App: React.FC = () => {
                             <button onClick={() => setIsAddProductOpen(true)} className="text-primary-500 font-bold mt-2">Agregar Producto</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-3 pb-32">
+                        <div className="grid grid-cols-2 gap-4 pb-32">
                             {productos.map((prod) => (
-                                <div key={prod.id} className="bg-white p-2 rounded-2xl border border-slate-100 flex flex-col gap-2 shadow-sm hover:border-primary-200 transition-all active:scale-95">
+                                <div key={prod.id} className="card-premium flex flex-col gap-3 group animate-fade-in">
                                     <div
-                                        className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-50 cursor-zoom-in relative group"
+                                        className="aspect-square bg-slate-50 rounded-[1.5rem] overflow-hidden border border-slate-50 cursor-pointer relative"
                                         onClick={() => prod.foto && setZoomedImage(prod.foto)}
                                     >
                                         {prod.foto ? (
-                                            <>
-                                                <img src={prod.foto} className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                                                    <ZoomIn size={14} className="text-white" />
-                                                </div>
-                                            </>
+                                            <img src={prod.foto} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-200">
-                                                <Package size={24} />
+                                                <Package size={32} />
                                             </div>
                                         )}
-                                        <div className="absolute top-1 right-1">
-                                            <span className={`px-1.5 py-0.5 rounded-lg text-[8px] font-black shadow-sm ${prod.stock > 0 ? 'bg-white text-slate-800' : 'bg-red-500 text-white'}`}>
+                                        <div className="absolute top-2 right-2">
+                                            <span className={`px-2 py-1 rounded-xl text-[9px] font-black shadow-lg backdrop-blur-md ${prod.stock > 0 ? 'bg-white/90 text-slate-800' : 'bg-red-500 text-white'}`}>
                                                 {prod.stock > 0 ? `${prod.stock} DISP.` : 'AGOTADO'}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1">
-                                        <h4 className="font-bold text-slate-800 text-[11px] leading-tight line-clamp-2 min-h-[2rem]">{prod.nombre}</h4>
-                                        <div className="flex justify-between items-end">
-                                            <p className="text-sm font-black text-primary-500">${prod.precioSugerido}</p>
+                                    <div className="space-y-2">
+                                        <h4 className="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2 min-h-[1.5rem] group-hover:text-primary-500 transition-colors uppercase tracking-tight">{prod.nombre}</h4>
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-base font-black text-slate-900 tracking-tighter">${prod.precioSugerido}</p>
                                             <button
                                                 onClick={() => setSelectedProduct(prod)}
-                                                className="bg-slate-900 text-white p-1.5 rounded-lg active:scale-90 transition-transform disabled:opacity-20"
+                                                className="bg-primary-500 text-white p-2.5 rounded-xl active:scale-90 transition-all shadow-lg shadow-primary-500/20 disabled:opacity-20"
                                                 disabled={prod.stock <= 0}
                                             >
-                                                <Plus size={14} />
+                                                <Plus size={16} strokeWidth={3} />
                                             </button>
                                         </div>
                                     </div>

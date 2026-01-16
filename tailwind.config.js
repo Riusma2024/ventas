@@ -19,24 +19,38 @@ export default {
                     800: '#9d174d',
                     900: '#831843',
                 },
-                accent: '#8b5cf6',
+                accent: {
+                    DEFAULT: '#8b5cf6',
+                    hover: '#7c3aed',
+                },
+                surface: '#f8fafc',
+            },
+            borderRadius: {
+                '4xl': '2rem',
+                '5xl': '3rem',
             },
             animation: {
-                'fade-in': 'fadeIn 0.3s ease-in-out',
-                'slide-up': 'slideUp 0.4s ease-out',
+                'fade-in': 'fadeIn 0.4s ease-out forwards',
+                'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                'bounce-subtle': 'bounceSubtle 2s infinite',
             },
             keyframes: {
                 fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
+                    '0%': { opacity: '0', transform: 'scale(0.95)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
                 },
                 slideUp: {
-                    '0%': { transform: 'translateY(20px)', opacity: '0' },
+                    '0%': { transform: 'translateY(40px)', opacity: '0' },
                     '100%': { transform: 'translateY(0)', opacity: '1' },
                 },
+                bounceSubtle: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-4px)' },
+                }
             },
-            backgroundImage: {
-                'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+            boxShadow: {
+                'premium': '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
+                'inner-soft': 'inset 0 2px 4px 0 rgb(0 0 0 / 0.02)',
             }
         },
     },

@@ -28,7 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                     </div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter">
                         Miss Ventas
-                        <span className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded-lg ml-2 align-middle font-bold">V1.2</span>
+                        <span className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded-lg ml-2 align-middle font-bold">V1.7</span>
                     </h1>
                 </div>
                 <button className="p-4 bg-white shadow-premium rounded-2xl text-slate-900 border border-slate-100 active:scale-90 transition-transform">

@@ -30,15 +30,17 @@ const App: React.FC = () => {
                 <div className="space-y-6">
                     {/* Quick Stats */}
                     <section className="grid grid-cols-2 gap-4">
-                        <div className="bg-primary-500 rounded-[2rem] p-5 text-white shadow-lg shadow-primary-500/20">
-                            <TrendingUp size={24} className="mb-2 opacity-80" />
-                            <p className="text-xs opacity-80 font-medium">Ventas Hoy</p>
-                            <h3 className="text-2xl font-bold">${totalVendidoHoy.toFixed(2)}</h3>
+                        <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden group">
+                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-500/10 rounded-full blur-2xl group-hover:bg-primary-500/20 transition-all"></div>
+                            <TrendingUp size={24} className="mb-4 text-primary-400" />
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Ventas Hoy</p>
+                            <h3 className="text-3xl font-black tracking-tighter">${totalVendidoHoy.toFixed(2)}</h3>
                         </div>
-                        <div className="bg-accent rounded-[2rem] p-5 text-white shadow-lg shadow-accent/20">
-                            <Wallet size={24} className="mb-2 opacity-80" />
-                            <p className="text-xs opacity-80 font-medium">Utilidad Hoy</p>
-                            <h3 className="text-2xl font-bold">${utilidadHoy.toFixed(2)}</h3>
+                        <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-premium relative overflow-hidden group">
+                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent/5 rounded-full blur-2xl group-hover:bg-accent/10 transition-all"></div>
+                            <Wallet size={24} className="mb-4 text-accent" />
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Utilidad Hoy</p>
+                            <h3 className="text-3xl font-black text-slate-900 tracking-tighter">${utilidadHoy.toFixed(2)}</h3>
                         </div>
                     </section>
 
@@ -158,19 +160,19 @@ const App: React.FC = () => {
                             <button onClick={() => setIsAddClientOpen(true)} className="text-accent font-bold mt-2">Agregar Cliente</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-4 pb-20">
+                        <div className="grid grid-cols-1 gap-4 pb-32">
                             {clientes.map(c => (
-                                <div key={c.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-accent/10 text-accent rounded-full flex items-center justify-center font-bold text-lg">
-                                        {c.nombre[0]}
+                                <div key={c.id} className="card-premium flex items-center gap-4 hover:translate-y-[-2px]">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
+                                        {c.nombre[0].toUpperCase()}
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-800">{c.apodo}</h4>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{c.nombre}</p>
+                                    <div className="flex-1">
+                                        <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo}</h4>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
                                     </div>
-                                    <div className="ml-auto text-right">
-                                        <p className="text-xs font-bold text-slate-400">DEUDA</p>
-                                        <p className="font-bold text-red-500">${c.deudaTotal.toFixed(2)}</p>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
+                                        <p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p>
                                     </div>
                                 </div>
                             ))}

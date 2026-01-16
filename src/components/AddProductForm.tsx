@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Camera, Save, X } from 'lucide-react';
+import { Camera, Save, X, Maximize2 } from 'lucide-react';
 import { db, type Producto } from '../db/db';
+import { resizeImage } from '../utils/imageUtils';
 
 interface AddProductFormProps {
     onClose: () => void;

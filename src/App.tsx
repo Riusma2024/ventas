@@ -6,13 +6,14 @@ import { AddProductForm } from './components/AddProductForm';
 import { AddClientForm } from './components/AddClientForm';
 import { SellProductForm } from './components/SellProductForm';
 import { TandaManager } from './components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, PieChart, Activity } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, PieChart, Activity, ZoomIn } from 'lucide-react';
 
 const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState('home');
     const [isAddProductOpen, setIsAddProductOpen] = useState(false);
     const [isAddClientOpen, setIsAddClientOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
@@ -97,19 +98,43 @@ const App: React.FC = () => {
                             <button onClick={() => setIsAddProductOpen(true)} className="text-primary-500 font-bold mt-2">Agregar Producto</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-4 pb-20">
+                        <div className="grid grid-cols-1 gap-3 pb-32">
                             {productos.map((prod) => (
-                                <div key={prod.id} className="bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-4 shadow-sm">
-                                    <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-100">
-                                        {prod.foto ? <img src={prod.foto} className="w-full h-full object-cover" /> : <Package size={24} className="m-auto mt-4 text-slate-200" />}
+                                <div key={prod.id} className="bg-white px-4 py-3 rounded-2xl border border-slate-100 flex items-center gap-4 shadow-sm hover:border-primary-100 transition-colors">
+                                    <div
+                                        className="w-14 h-14 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 cursor-zoom-in relative group"
+                                        onClick={() => prod.foto && setZoomedImage(prod.foto)}
+                                    >
+                                        {prod.foto ? (
+                                            <>
+                                                <img src={prod.foto} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                                    <ZoomIn size={16} className="text-white" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                                <Package size={20} />
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-bold text-slate-800">{prod.nombre}</h4>
-                                        <p className="text-xs text-slate-400 font-medium">Stock: {prod.stock}</p>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-800 text-sm truncate">{prod.nombre}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase ${prod.stock > 5 ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                STOCK: {prod.stock}
+                                            </span>
+                                            <span className="text-[9px] font-bold text-slate-300">|</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase">COSTO: ${prod.costo}</span>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-lg font-bold text-primary-500">${prod.precioSugerido}</p>
-                                        <button onClick={() => setSelectedProduct(prod)} className="text-[10px] bg-slate-900 text-white px-3 py-1 rounded-full font-bold uppercase disabled:opacity-30" disabled={prod.stock <= 0}>
+                                    <div className="text-right flex flex-col items-end gap-1">
+                                        <p className="text-base font-black text-primary-500 leading-none">${prod.precioSugerido}</p>
+                                        <button
+                                            onClick={() => setSelectedProduct(prod)}
+                                            className="text-[9px] bg-slate-900 text-white px-3 py-1.5 rounded-lg font-black uppercase tracking-wider active:scale-90 transition-transform disabled:opacity-30"
+                                            disabled={prod.stock <= 0}
+                                        >
                                             {prod.stock > 0 ? 'Vender' : 'Agotado'}
                                         </button>
                                     </div>
@@ -167,4 +192,37 @@ const App: React.FC = () => {
                     <h2 className="text-2xl font-bold text-slate-800">Resumen Financiero</h2>
                     <div className="glass-card bg-slate-900 text-white p-8">
                         <PieChart size={40} className="text-primary-400 mb-4 opacity-50" />
-                        <h3 className="text-3xl font-bold 
+                        <h3 className="text-3xl font-bold mb-2">En Desarrollo</h3>
+                        <p className="text-slate-400 text-sm">Pronto verás aquí tus márgenes de utilidad y proyecciones.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Modals */}
+            {isAddProductOpen && <AddProductForm onClose={() => setIsAddProductOpen(false)} onSuccess={() => setIsAddProductOpen(false)} />}
+            {isAddClientOpen && <AddClientForm onClose={() => setIsAddClientOpen(false)} onSuccess={() => setIsAddClientOpen(false)} />}
+            {selectedProduct && <SellProductForm producto={selectedProduct} onClose={() => setSelectedProduct(null)} onSuccess={() => setSelectedProduct(null)} />}
+
+            {/* Image Zoom Modal */}
+            {zoomedImage && (
+                <div
+                    className="fixed inset-0 bg-slate-900/95 z-[100] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+                    onClick={() => setZoomedImage(null)}
+                >
+                    <div className="relative max-w-full max-h-full">
+                        <img
+                            src={zoomedImage}
+                            className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain border-4 border-white/10"
+                            alt="Zoom"
+                        />
+                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white">
+                            <X size={24} />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </Layout>
+    );
+};
+
+export default App;

@@ -6,7 +6,7 @@ import { AddProductForm } from './components/AddProductForm';
 import { AddClientForm } from './components/AddClientForm';
 import { SellProductForm } from './components/SellProductForm';
 import { TandaManager } from './components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit } from 'lucide-react';
 import { ReportsView } from './components/ReportsView';
 import { syncAllDebts } from './utils/dbUtils';
 import { ClientAccountStatement } from './components/ClientAccountStatement';
@@ -21,6 +21,7 @@ const App: React.FC = () => {
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [selectedClientAccount, setSelectedClientAccount] = useState<Cliente | null>(null);
     const [selectedSale, setSelectedSale] = useState<Venta | null>(null);
+    const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
 
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
@@ -136,13 +137,21 @@ const App: React.FC = () => {
                                         <h4 className="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2 min-h-[1.5rem] group-hover:text-primary-500 transition-colors uppercase tracking-tight">{prod.nombre}</h4>
                                         <div className="flex justify-between items-center">
                                             <p className="text-base font-black text-slate-900 tracking-tighter">${prod.precioSugerido}</p>
-                                            <button
-                                                onClick={() => setSelectedProduct(prod)}
-                                                className="bg-primary-500 text-white p-2.5 rounded-xl active:scale-90 transition-all shadow-lg shadow-primary-500/20 disabled:opacity-20"
-                                                disabled={prod.stock <= 0}
-                                            >
-                                                <Plus size={16} strokeWidth={3} />
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setEditingProduct(prod)}
+                                                    className="bg-slate-100 text-slate-500 p-2.5 rounded-xl active:scale-90 transition-all hover:bg-slate-200"
+                                                >
+                                                    <Edit size={16} strokeWidth={3} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedProduct(prod)}
+                                                    className="bg-primary-500 text-white p-2.5 rounded-xl active:scale-90 transition-all shadow-lg shadow-primary-500/20 disabled:opacity-20"
+                                                    disabled={prod.stock <= 0}
+                                                >
+                                                    <Plus size={16} strokeWidth={3} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -214,6 +223,7 @@ const App: React.FC = () => {
 
             {/* Modals */}
             {isAddProductOpen && <AddProductForm onClose={() => setIsAddProductOpen(false)} onSuccess={() => setIsAddProductOpen(false)} />}
+            {editingProduct && <AddProductForm producto={editingProduct} onClose={() => setEditingProduct(null)} onSuccess={() => setEditingProduct(null)} />}
             {isAddClientOpen && <AddClientForm onClose={() => setIsAddClientOpen(false)} onSuccess={() => setIsAddClientOpen(false)} />}
             {selectedProduct && <SellProductForm producto={selectedProduct} onClose={() => setSelectedProduct(null)} onSuccess={() => setSelectedProduct(null)} />}
             {selectedClientAccount && <ClientAccountStatement cliente={selectedClientAccount} onClose={() => setSelectedClientAccount(null)} />}

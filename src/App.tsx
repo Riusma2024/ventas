@@ -6,7 +6,8 @@ import { AddProductForm } from './components/AddProductForm';
 import { AddClientForm } from './components/AddClientForm';
 import { SellProductForm } from './components/SellProductForm';
 import { TandaManager } from './components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, PieChart, Activity, ZoomIn, X } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X } from 'lucide-react';
+import { ReportsView } from './components/ReportsView';
 
 const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState('home');
@@ -183,16 +184,7 @@ const App: React.FC = () => {
 
             {activeTab === 'tandas' && <TandaManager />}
 
-            {activeTab === 'reports' && (
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-slate-800">Resumen Financiero</h2>
-                    <div className="glass-card bg-slate-900 text-white p-8">
-                        <PieChart size={40} className="text-primary-400 mb-4 opacity-50" />
-                        <h3 className="text-3xl font-bold mb-2">En Desarrollo</h3>
-                        <p className="text-slate-400 text-sm">Pronto verás aquí tus márgenes de utilidad y proyecciones.</p>
-                    </div>
-                </div>
-            )}
+            {activeTab === 'reports' && <ReportsView />}
 
             {/* Modals */}
             {isAddProductOpen && <AddProductForm onClose={() => setIsAddProductOpen(false)} onSuccess={() => setIsAddProductOpen(false)} />}

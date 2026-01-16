@@ -177,26 +177,7 @@ const App: React.FC = () => {
                             <button onClick={() => setIsAddClientOpen(true)} className="text-accent font-bold mt-2">Agregar Cliente</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-4 pb-32">
-                            {clientes.map(c => (
-                            <div
-                                key={c.id}
-                                onClick={() => setSelectedClientAccount(c)}
-                                className="card-premium flex items-center gap-4 hover:translate-y-[-2px] cursor-pointer active:scale-95 transition-all"
-                            >
-                                <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
-                                    {c.nombre[0].toUpperCase()}
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo}</h4>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
-                                    <p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p>
-                                </div>
-                            </div>
-                            ))}
+                        <div className="grid grid-cols-1 gap-4 pb-32">{clientes.map(c => (<div key={c.id} onClick={() => setSelectedClientAccount(c)} className="card-premium flex items-center gap-4 hover:translate-y-[-2px] cursor-pointer active:scale-95 transition-all"><div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">{c.nombre[0].toUpperCase()}</div><div className="flex-1"><h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo}</h4><p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p></div><div className="text-right"><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p><p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p></div></div>))}</div>
                         </div>
                     )}
                 </div>

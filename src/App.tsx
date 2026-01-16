@@ -10,7 +10,8 @@ import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search
 import { ReportsView } from './components/ReportsView';
 import { syncAllDebts } from './utils/dbUtils';
 import { ClientAccountStatement } from './components/ClientAccountStatement';
-import { type Cliente } from './db/db';
+import { SaleDetail } from './components/SaleDetail';
+import { type Cliente, type Venta } from './db/db';
 
 const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState('home');
@@ -19,6 +20,7 @@ const App: React.FC = () => {
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [selectedClientAccount, setSelectedClientAccount] = useState<Cliente | null>(null);
+    const [selectedSale, setSelectedSale] = useState<Venta | null>(null);
 
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
@@ -69,7 +71,11 @@ const App: React.FC = () => {
                         <div className="space-y-3 pb-10">
                             {ventasHoy && ventasHoy.length > 0 ? (
                                 ventasHoy.reverse().slice(0, 5).map(v => (
-                                    <div key={v.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
+                                    <div
+                                        key={v.id}
+                                        onClick={() => setSelectedSale(v)}
+                                        className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm cursor-pointer active:scale-95 transition-all hover:border-primary-100"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-500">
                                                 <Activity size={20} />
@@ -179,23 +185,23 @@ const App: React.FC = () => {
                     ) : (
                         <div className="grid grid-cols-1 gap-4 pb-32">
                             {clientes.map(c => (
-                            <div
-                                key={c.id}
-                                onClick={() => setSelectedClientAccount(c)}
-                                className="card-premium flex items-center gap-4 hover:translate-y-[-2px] cursor-pointer active:scale-95 transition-all"
-                            >
-                                <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
-                                    {c.nombre[0].toUpperCase()}
+                                <div
+                                    key={c.id}
+                                    onClick={() => setSelectedClientAccount(c)}
+                                    className="card-premium flex items-center gap-4 hover:translate-y-[-2px] cursor-pointer active:scale-95 transition-all"
+                                >
+                                    <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
+                                        {c.nombre[0].toUpperCase()}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo}</h4>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
+                                        <p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo}</h4>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
-                                    <p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p>
-                                </div>
-                            </div>
                             ))}
                         </div>
                     )}
@@ -211,6 +217,7 @@ const App: React.FC = () => {
             {isAddClientOpen && <AddClientForm onClose={() => setIsAddClientOpen(false)} onSuccess={() => setIsAddClientOpen(false)} />}
             {selectedProduct && <SellProductForm producto={selectedProduct} onClose={() => setSelectedProduct(null)} onSuccess={() => setSelectedProduct(null)} />}
             {selectedClientAccount && <ClientAccountStatement cliente={selectedClientAccount} onClose={() => setSelectedClientAccount(null)} />}
+            {selectedSale && <SaleDetail venta={selectedSale} onClose={() => setSelectedSale(null)} />}
 
             {/* Image Zoom Modal */}
             {zoomedImage && (

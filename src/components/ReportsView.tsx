@@ -7,14 +7,18 @@ import {
 } from 'recharts';
 import {
     TrendingUp, Wallet, Package, AlertCircle, BarChart3,
-    ChevronRight, ArrowUpRight, DollarSign, Users, Clock, ShoppingBag
+    ChevronRight, ArrowUpRight, DollarSign, Users, Clock, ShoppingBag, X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 export const ReportsView: React.FC = () => {
     const ventas = useLiveQuery(() => db.ventas.toArray());
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
+
+    const [filtroCliente, setFiltroCliente] = useState<string>('');
+    const [filtroFecha, setFiltroFecha] = useState<string>('');
 
     // Process Sales Data for the Chart (Last 7 Days)
     const chartData = useMemo(() => {
@@ -65,17 +69,22 @@ export const ReportsView: React.FC = () => {
         };
     }, [ventas, productos, clientes]);
 
-    // Detailed Sales History
+    // Detailed and Filtered Sales History
     const salesHistory = useMemo(() => {
         if (!ventas || !productos || !clientes) return [];
         return ventas
+            .filter(v => {
+                const matchCliente = filtroCliente ? v.clienteId === Number(filtroCliente) : true;
+                const matchFecha = filtroFecha ? new Date(v.fecha).toISOString().split('T')[0] === filtroFecha : true;
+                return matchCliente && matchFecha;
+            })
             .map(v => ({
                 ...v,
                 producto: productos.find(p => p.id === v.productoId),
                 cliente: clientes.find(c => c.id === v.clienteId)
             }))
             .sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
-    }, [ventas, productos, clientes]);
+    }, [ventas, productos, clientes, filtroCliente, filtroFecha]);
 
     const pieData = [
         { name: 'Inversión', value: metrics.inversionInventario, color: '#64748b' },
@@ -228,6 +237,40 @@ export const ReportsView: React.FC = () => {
                 <div className="flex justify-between items-end px-2">
                     <h3 className="text-xl font-black text-slate-900 tracking-tighter">Historial de Operaciones</h3>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{salesHistory.length} Registros</span>
+                </div>
+
+                {/* Filters UI */}
+                <div className="flex gap-3 px-2 overflow-x-auto no-scrollbar pb-2">
+                    <div className="flex-1 min-w-[140px]">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Filtrar por Cliente</label>
+                        <select
+                            className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 outline-none focus:border-primary-300 transition-colors"
+                            value={filtroCliente}
+                            onChange={(e) => setFiltroCliente(e.target.value)}
+                        >
+                            <option value="">Todos los Clientes</option>
+                            {clientes?.map(c => (
+                                <option key={c.id} value={c.id}>{c.apodo}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Filtrar por Fecha</label>
+                        <input
+                            type="date"
+                            className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 outline-none focus:border-primary-300 transition-colors"
+                            value={filtroFecha}
+                            onChange={(e) => setFiltroFecha(e.target.value)}
+                        />
+                    </div>
+                    {(filtroCliente || filtroFecha) && (
+                        <button
+                            onClick={() => { setFiltroCliente(''); setFiltroFecha(''); }}
+                            className="mt-4 p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200 transition-colors self-end"
+                        >
+                            <X size={14} strokeWidth={3} />
+                        </button>
+                    )}
                 </div>
 
                 <div className="space-y-4">

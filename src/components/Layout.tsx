@@ -22,7 +22,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             {/* Header */}
             <header className="p-6 pb-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-10 flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Miss Ventas</h1>
+                    <h1 className="text-2xl font-bold text-slate-800">
+                        Miss Ventas
+                        <span className="text-[10px] bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full ml-2 align-middle">v1.1</span>
+                    </h1>
                     <p className="text-xs text-primary-500 font-medium tracking-wider uppercase">Local-First PWA</p>
                 </div>
                 <button className="p-3 bg-white shadow-sm rounded-2xl text-slate-400">

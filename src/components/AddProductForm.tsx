@@ -15,12 +15,13 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     const [stock, setStock] = useState('1');
     const [foto, setFoto] = useState<string | undefined>(undefined);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setFoto(reader.result as string);
+            reader.onloadend = async () => {
+                const resized = await resizeImage(reader.result as string);
+                setFoto(resized);
             };
             reader.readAsDataURL(file);
         }
@@ -43,8 +44,8 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end justify-center">
-            <div className="bg-white w-full max-w-md rounded-t-[3rem] p-8 space-y-6 animate-slide-up">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-md rounded-[3rem] p-8 space-y-6 animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
                 <div className="flex justify-between items-center">
                     <h3 className="text-xl font-bold text-slate-800">Nuevo Producto</h3>
                     <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-400">

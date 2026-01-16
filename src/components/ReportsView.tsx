@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import {
     TrendingUp, Wallet, Package, AlertCircle, BarChart3,
-    ChevronRight, ArrowUpRight, DollarSign, Users
+    ChevronRight, ArrowUpRight, DollarSign, Users, Clock, ShoppingBag
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -63,6 +63,18 @@ export const ReportsView: React.FC = () => {
             agotados,
             margenPromedio: totalVentas > 0 ? (totalUtilidad / totalVentas) * 100 : 0
         };
+    }, [ventas, productos, clientes]);
+
+    // Detailed Sales History
+    const salesHistory = useMemo(() => {
+        if (!ventas || !productos || !clientes) return [];
+        return ventas
+            .map(v => ({
+                ...v,
+                producto: productos.find(p => p.id === v.productoId),
+                cliente: clientes.find(c => c.id === v.clienteId)
+            }))
+            .sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
     }, [ventas, productos, clientes]);
 
     const pieData = [
@@ -209,6 +221,73 @@ export const ReportsView: React.FC = () => {
                             <span className="text-[8px] font-black text-primary-500 uppercase">Ganancia Esperada</span>
                         </div>
                     </div>
+                </div>
+            </div>
+            {/* Detailed Sales History */}
+            <div className="space-y-6">
+                <div className="flex justify-between items-end px-2">
+                    <h3 className="text-xl font-black text-slate-900 tracking-tighter">Historial de Operaciones</h3>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{salesHistory.length} Registros</span>
+                </div>
+
+                <div className="space-y-4">
+                    {salesHistory.length === 0 ? (
+                        <div className="card-premium py-12 text-center text-slate-400 italic text-sm">
+                            Aún no hay ventas registradas
+                        </div>
+                    ) : (
+                        salesHistory.map((v) => (
+                            <div key={v.id} className="card-premium overflow-hidden group hover:border-primary-200 transition-colors">
+                                <div className="flex gap-4 items-center">
+                                    {/* Product Thumbnail */}
+                                    <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex-shrink-0 group-hover:scale-105 transition-transform">
+                                        {v.producto?.foto ? (
+                                            <img src={v.producto.foto} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                                <Package size={24} />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Sale Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            <span className="text-[8px] font-black bg-primary-100 text-primary-600 px-1.5 py-0.5 rounded-md uppercase tracking-widest">
+                                                ENTREGADO
+                                            </span>
+                                            <div className="flex items-center gap-1 text-slate-400">
+                                                <Clock size={10} />
+                                                <span className="text-[9px] font-black uppercase tracking-tighter">
+                                                    {v.fecha.toLocaleDateString()} — {v.fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <h4 className="font-black text-slate-900 text-sm truncate uppercase tracking-tighter">
+                                            {v.producto?.nombre || 'Producto Eliminado'}
+                                        </h4>
+                                        <div className="flex items-center gap-1 text-slate-500">
+                                            <Users size={12} className="text-slate-300" />
+                                            <p className="text-[11px] font-bold truncate">
+                                                Compró: <span className="text-slate-900">@{v.cliente?.apodo || 'Cliente Desconocido'}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Price Tag */}
+                                    <div className="text-right pl-2">
+                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Venta</p>
+                                        <p className="text-lg font-black text-primary-600 tracking-tighter leading-none">
+                                            ${v.precioVenta.toFixed(2)}
+                                        </p>
+                                        <p className="text-[9px] font-bold text-slate-400 mt-1">
+                                            Ganó: +${v.utilidad.toFixed(2)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>

@@ -28,7 +28,6 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
     };
 
     return (
-    return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20">
                 <div className="flex justify-between items-center px-2">

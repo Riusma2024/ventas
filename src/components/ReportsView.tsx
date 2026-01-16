@@ -12,7 +12,11 @@ import {
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
-export const ReportsView: React.FC = () => {
+interface ReportsViewProps {
+    onShowCriticalStock: () => void;
+}
+
+export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock }) => {
     const ventas = useLiveQuery(() => db.ventas.toArray());
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
@@ -189,7 +193,10 @@ export const ReportsView: React.FC = () => {
             <div className="space-y-4">
                 <h3 className="text-lg font-black text-slate-900 tracking-tighter px-2">Análisis de Inventario</h3>
                 <div className="grid grid-cols-1 gap-4">
-                    <div className="card-premium flex items-center justify-between p-6">
+                    <div
+                        className="card-premium flex items-center justify-between p-6 cursor-pointer active:scale-95 transition-all hover:border-red-200 group"
+                        onClick={onShowCriticalStock}
+                    >
                         <div className="flex items-center gap-4">
                             <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center border border-red-100">
                                 <AlertCircle size={24} strokeWidth={2.5} />

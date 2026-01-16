@@ -11,6 +11,7 @@ import { ReportsView } from './components/ReportsView';
 import { syncAllDebts } from './utils/dbUtils';
 import { ClientAccountStatement } from './components/ClientAccountStatement';
 import { SaleDetail } from './components/SaleDetail';
+import { CriticalStockModal } from './components/CriticalStockModal';
 import { type Cliente, type Venta } from './db/db';
 
 const App: React.FC = () => {
@@ -22,6 +23,7 @@ const App: React.FC = () => {
     const [selectedClientAccount, setSelectedClientAccount] = useState<Cliente | null>(null);
     const [selectedSale, setSelectedSale] = useState<Venta | null>(null);
     const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
+    const [isCriticalStockOpen, setIsCriticalStockOpen] = useState(false);
 
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
@@ -219,7 +221,7 @@ const App: React.FC = () => {
 
             {activeTab === 'tandas' && <TandaManager />}
 
-            {activeTab === 'reports' && <ReportsView />}
+            {activeTab === 'reports' && <ReportsView onShowCriticalStock={() => setIsCriticalStockOpen(true)} />}
 
             {/* Modals */}
             {isAddProductOpen && <AddProductForm onClose={() => setIsAddProductOpen(false)} onSuccess={() => setIsAddProductOpen(false)} />}
@@ -228,6 +230,15 @@ const App: React.FC = () => {
             {selectedProduct && <SellProductForm producto={selectedProduct} onClose={() => setSelectedProduct(null)} onSuccess={() => setSelectedProduct(null)} />}
             {selectedClientAccount && <ClientAccountStatement cliente={selectedClientAccount} onClose={() => setSelectedClientAccount(null)} />}
             {selectedSale && <SaleDetail venta={selectedSale} onClose={() => setSelectedSale(null)} />}
+            {isCriticalStockOpen && (
+                <CriticalStockModal
+                    onClose={() => setIsCriticalStockOpen(false)}
+                    onEditProduct={(p) => {
+                        setIsCriticalStockOpen(false);
+                        setEditingProduct(p);
+                    }}
+                />
+            )}
 
             {/* Image Zoom Modal */}
             {zoomedImage && (

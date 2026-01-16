@@ -6,8 +6,9 @@ import { AddProductForm } from './components/AddProductForm';
 import { AddClientForm } from './components/AddClientForm';
 import { SellProductForm } from './components/SellProductForm';
 import { TandaManager } from './components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw } from 'lucide-react';
 import { ReportsView } from './components/ReportsView';
+import { syncAllDebts } from './utils/dbUtils';
 
 const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState('home');
@@ -146,12 +147,24 @@ const App: React.FC = () => {
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-slate-800">Clientes</h2>
-                        <button
-                            onClick={() => setIsAddClientOpen(true)}
-                            className="bg-accent p-3 rounded-2xl text-white shadow-lg"
-                        >
-                            <UserPlus size={20} />
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={async () => {
+                                    await syncAllDebts();
+                                    alert('Deudas sincronizadas correctamente');
+                                }}
+                                title="Sincronizar Deudas"
+                                className="bg-slate-100 p-3 rounded-2xl text-slate-500 hover:bg-slate-200 transition-colors"
+                            >
+                                <RefreshCw size={20} />
+                            </button>
+                            <button
+                                onClick={() => setIsAddClientOpen(true)}
+                                className="bg-accent p-3 rounded-2xl text-white shadow-lg"
+                            >
+                                <UserPlus size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     {!clientes || clientes.length === 0 ? (

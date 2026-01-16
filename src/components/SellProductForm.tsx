@@ -24,27 +24,35 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
 
         try {
             await db.transaction('rw', [db.ventas, db.productos, db.clientes], async () => {
-                // 1. Add Sale
+                // 1. Fetch latest product state within transaction
+                const latestProd = await db.productos.get(producto.id!);
+                if (!latestProd || latestProd.stock <= 0) throw new Error('Stock insuficiente o producto no encontrado');
+
+                // 2. Add Sale
                 await db.ventas.add({
-                    productoId: producto.id!,
+                    productoId: latestProd.id!,
                     clienteId: idClie,
                     precioVenta: Number(precioVenta),
-                    utilidad,
+                    utilidad: Number(precioVenta) - latestProd.costo,
                     fecha: new Date(),
                     pagado: false
                 });
 
-                // 2. Update stock
-                await db.productos.update(producto.id!, {
-                    stock: producto.stock - 1
+                // 3. Update stock based on latest state
+                await db.productos.update(latestProd.id!, {
+                    stock: latestProd.stock - 1
                 });
 
-                // 3. Update Client Debt
+                // 4. Update Client Debt with validation
                 const client = await db.clientes.get(idClie);
                 if (client) {
+                    const currentDebt = Number(client.deudaTotal) || 0;
+                    const saleAmount = Number(precioVenta);
+
                     await db.clientes.update(idClie, {
-                        deudaTotal: client.deudaTotal + Number(precioVenta)
+                        deudaTotal: currentDebt + saleAmount
                     });
+                    console.log(`Deuda actualizada para ${client.apodo}: ${currentDebt} + ${saleAmount} = ${currentDebt + saleAmount}`);
                 }
             });
 

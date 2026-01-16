@@ -1,26 +1,37 @@
 import React, { useState } from 'react';
 import { UserPlus, Save, X } from 'lucide-react';
-import { db } from '../db/db';
+import { db, type Cliente } from '../db/db';
 
 interface AddClientFormProps {
+    cliente?: Cliente;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess }) => {
-    const [nombre, setNombre] = useState('');
-    const [apodo, setApodo] = useState('');
-    const [contacto, setContacto] = useState('');
+export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, onSuccess }) => {
+    const [nombre, setNombre] = useState(cliente?.nombre || '');
+    const [apodo, setApodo] = useState(cliente?.apodo || '');
+    const [whatsapp, setWhatsapp] = useState(cliente?.whatsapp || '');
+    const [facebook, setFacebook] = useState(cliente?.facebook || '');
+    const [otro, setOtro] = useState(cliente?.otro || '');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await db.clientes.add({
+            const clientData = {
                 nombre,
                 apodo,
-                contacto,
-                deudaTotal: 0
-            });
+                whatsapp,
+                facebook,
+                otro,
+                deudaTotal: cliente?.deudaTotal || 0
+            };
+
+            if (cliente?.id) {
+                await db.clientes.update(cliente.id, clientData);
+            } else {
+                await db.clientes.add(clientData);
+            }
             onSuccess();
         } catch (error) {
             console.error('Error al guardar cliente:', error);
@@ -32,8 +43,12 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20">
                 <div className="flex justify-between items-center px-2">
                     <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Nuevo Cliente</h3>
-                        <p className="text-[10px] text-accent font-black uppercase tracking-widest">Base de Datos CRM</p>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
+                            {cliente ? 'Editar Cliente' : 'Nuevo Cliente'}
+                        </h3>
+                        <p className="text-[10px] text-accent font-black uppercase tracking-widest">
+                            {cliente ? 'Actualizar Directorio' : 'Base de Datos CRM'}
+                        </p>
                     </div>
                     <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 active:scale-90 transition-transform">
                         <X size={20} strokeWidth={3} />
@@ -73,20 +88,42 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ onClose, onSuccess
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Contacto (Redes/Tel)</label>
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Telefono o Whatsapp</label>
                             <input
                                 type="text"
                                 className="input-field"
-                                placeholder="WhatsApp o Facebook"
-                                value={contacto}
-                                onChange={(e) => setContacto(e.target.value)}
+                                placeholder="Ej. 5512345678"
+                                value={whatsapp}
+                                onChange={(e) => setWhatsapp(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Perfil de Facebook</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="URL o nombre de perfil"
+                                value={facebook}
+                                onChange={(e) => setFacebook(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Otro</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="Referencia u otro contacto"
+                                value={otro}
+                                onChange={(e) => setOtro(e.target.value)}
                             />
                         </div>
                     </div>
 
                     <button type="submit" className="btn-primary w-full bg-slate-900 hover:bg-slate-800 shadow-2xl">
                         <Save size={20} strokeWidth={3} />
-                        Guardar en Directorio
+                        {cliente ? 'Guardar Cambios' : 'Guardar en Directorio'}
                     </button>
                 </form>
             </div>

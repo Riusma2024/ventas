@@ -24,6 +24,8 @@ const App: React.FC = () => {
     const [selectedSale, setSelectedSale] = useState<Venta | null>(null);
     const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
     const [isCriticalStockOpen, setIsCriticalStockOpen] = useState(false);
+    const [editingClient, setEditingClient] = useState<Cliente | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const productos = useLiveQuery(() => db.productos.toArray());
     const clientes = useLiveQuery(() => db.clientes.toArray());
@@ -73,24 +75,29 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-3 pb-10">
                             {ventasHoy && ventasHoy.length > 0 ? (
-                                ventasHoy.reverse().slice(0, 5).map(v => (
-                                    <div
-                                        key={v.id}
-                                        onClick={() => setSelectedSale(v)}
-                                        className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm cursor-pointer active:scale-95 transition-all hover:border-primary-100"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-500">
-                                                <Activity size={20} />
+                                ventasHoy.reverse().slice(0, 5).map(v => {
+                                    const cliente = clientes?.find(c => c.id === v.clienteId);
+                                    const nombreAMostrar = cliente ? (cliente.apodo || cliente.nombre) : 'Venta';
+
+                                    return (
+                                        <div
+                                            key={v.id}
+                                            onClick={() => setSelectedSale(v)}
+                                            className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm cursor-pointer active:scale-95 transition-all hover:border-primary-100"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-500">
+                                                    <Activity size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-800 text-sm">{nombreAMostrar}</p>
+                                                    <p className="text-[10px] text-slate-400 font-medium">{v.fecha.toLocaleTimeString()}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-slate-800 text-sm">Venta</p>
-                                                <p className="text-[10px] text-slate-400 font-medium">{v.fecha.toLocaleTimeString()}</p>
-                                            </div>
+                                            <p className="font-bold text-primary-500">+${v.precioVenta}</p>
                                         </div>
-                                        <p className="font-bold text-primary-500">+${v.precioVenta}</p>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex items-center gap-4 text-slate-400 italic text-sm justify-center py-10">
                                     Aún no hay movimientos hoy
@@ -187,6 +194,18 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Search Bar */}
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o apodo..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary-300 transition-colors"
+                        />
+                    </div>
+
                     {!clientes || clientes.length === 0 ? (
                         <div className="glass-card text-center py-12 border-dashed border-2 border-slate-200">
                             <Users size={48} className="mx-auto text-slate-200 mb-4" />
@@ -195,25 +214,40 @@ const App: React.FC = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-4 pb-32">
-                            {clientes.map(c => (
-                                <div
-                                    key={c.id}
-                                    onClick={() => setSelectedClientAccount(c)}
-                                    className="card-premium flex items-center gap-4 hover:translate-y-[-2px] cursor-pointer active:scale-95 transition-all"
-                                >
-                                    <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
-                                        {c.nombre[0].toUpperCase()}
+                            {clientes
+                                .filter(c => {
+                                    const query = searchQuery.toLowerCase();
+                                    return c.nombre.toLowerCase().includes(query) || c.apodo.toLowerCase().includes(query);
+                                })
+                                .map(c => (
+                                    <div
+                                        key={c.id}
+                                        className="card-premium flex items-center gap-4 hover:translate-y-[-2px] transition-all group"
+                                    >
+                                        <div
+                                            onClick={() => setSelectedClientAccount(c)}
+                                            className="flex items-center gap-4 flex-1 cursor-pointer"
+                                        >
+                                            <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
+                                                {c.nombre[0].toUpperCase()}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo || c.nombre}</h4>
+                                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
+                                                <p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setEditingClient(c)}
+                                            className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 active:scale-90 transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Edit size={16} strokeWidth={3} />
+                                        </button>
                                     </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo}</h4>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
-                                        <p className="font-black text-red-500 text-lg tracking-tighter">${c.deudaTotal.toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     )}
                 </div>
@@ -227,6 +261,7 @@ const App: React.FC = () => {
             {isAddProductOpen && <AddProductForm onClose={() => setIsAddProductOpen(false)} onSuccess={() => setIsAddProductOpen(false)} />}
             {editingProduct && <AddProductForm producto={editingProduct} onClose={() => setEditingProduct(null)} onSuccess={() => setEditingProduct(null)} />}
             {isAddClientOpen && <AddClientForm onClose={() => setIsAddClientOpen(false)} onSuccess={() => setIsAddClientOpen(false)} />}
+            {editingClient && <AddClientForm cliente={editingClient} onClose={() => setEditingClient(null)} onSuccess={() => setEditingClient(null)} />}
             {selectedProduct && <SellProductForm producto={selectedProduct} onClose={() => setSelectedProduct(null)} onSuccess={() => setSelectedProduct(null)} />}
             {selectedClientAccount && <ClientAccountStatement cliente={selectedClientAccount} onClose={() => setSelectedClientAccount(null)} />}
             {selectedSale && <SaleDetail venta={selectedSale} onClose={() => setSelectedSale(null)} />}

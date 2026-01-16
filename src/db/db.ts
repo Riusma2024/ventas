@@ -24,7 +24,9 @@ export interface Cliente {
     id?: number;
     nombre: string;
     apodo: string;
-    contacto?: string;
+    whatsapp?: string;
+    facebook?: string;
+    otro?: string;
     deudaTotal: number;
 }
 

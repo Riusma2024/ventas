@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserPlus, Save, X } from 'lucide-react';
-import { db, type Cliente } from '../db/db';
+import { type Cliente } from '../db/db';
+import { api } from '../config/api';
 
 interface AddClientFormProps {
     cliente?: Cliente;
@@ -14,9 +15,13 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
     const [whatsapp, setWhatsapp] = useState(cliente?.whatsapp || '');
     const [facebook, setFacebook] = useState(cliente?.facebook || '');
     const [otro, setOtro] = useState(cliente?.otro || '');
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
+        setIsSubmitting(true);
         try {
             const clientData = {
                 nombre,
@@ -28,13 +33,16 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
             };
 
             if (cliente?.id) {
-                await db.clientes.update(cliente.id, clientData);
+                await api.put(`/clientes/${cliente.id}`, clientData);
             } else {
-                await db.clientes.add(clientData);
+                await api.post('/clientes', clientData);
             }
             onSuccess();
-        } catch (error) {
-            console.error('Error al guardar cliente:', error);
+        } catch (err: any) {
+            console.error('Error al guardar cliente:', err);
+            setError(err.response?.data?.error || 'Ocurrió un error al guardar. Verifica los datos.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -61,6 +69,12 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
                             <UserPlus size={40} strokeWidth={2.5} />
                         </div>
                     </div>
+
+                    {error && (
+                        <div className="bg-red-50 text-red-500 p-3 flex rounded-xl text-sm font-bold border border-red-100">
+                            {error}
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         <div className="space-y-1">
@@ -121,9 +135,9 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
                         </div>
                     </div>
 
-                    <button type="submit" className="btn-primary w-full bg-slate-900 hover:bg-slate-800 shadow-2xl">
+                    <button type="submit" disabled={isSubmitting} className="btn-primary w-full bg-slate-900 hover:bg-slate-800 shadow-2xl disabled:opacity-50">
                         <Save size={20} strokeWidth={3} />
-                        {cliente ? 'Guardar Cambios' : 'Guardar en Directorio'}
+                        {isSubmitting ? 'Guardando...' : (cliente ? 'Guardar Cambios' : 'Guardar en Directorio')}
                     </button>
                 </form>
             </div>

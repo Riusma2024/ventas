@@ -1,11 +1,10 @@
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Cliente } from '../db/db';
+import { type Cliente, type Abono } from '../db/db';
 import { X, Clock, Package, DollarSign, Wallet, Phone, Facebook, Globe, Plus, CheckCircle, XCircle, Image as ImageIcon, Edit } from 'lucide-react';
 import { AddAbonoForm } from './AddAbonoForm';
 import { EditAbonoForm } from './EditAbonoForm';
-import { useState } from 'react';
-import { type Abono } from '../db/db';
+import { useState, useEffect } from 'react';
+import { api } from '../config/api';
 
 interface ClientAccountStatementProps {
     cliente: Cliente;
@@ -16,27 +15,43 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
     const [isAddAbonoOpen, setIsAddAbonoOpen] = useState(false);
     const [editingAbono, setEditingAbono] = useState<Abono | null>(null);
 
-    // Obtener datos actualizados del cliente en tiempo real
-    const clienteActualizado = useLiveQuery(
-        () => db.clientes.get(cliente.id!),
-        [cliente.id]
-    );
+    const [clienteActualizado, setClienteActualizado] = useState<Cliente | null>(null);
+    const [ventasDetalladas, setVentasDetalladas] = useState<any[]>([]);
+    const [abonos, setAbonos] = useState<Abono[]>([]);
 
-    const ventas = useLiveQuery(() =>
-        db.ventas.where('clienteId').equals(cliente.id!).reverse().toArray()
-    );
-    const productos = useLiveQuery(() => db.productos.toArray());
-    const abonos = useLiveQuery(() =>
-        db.abonos.where('clienteId').equals(cliente.id!).reverse().toArray()
-    );
+    const loadData = async () => {
+        try {
+            const [cliRes, ventRes, prodRes, abonRes] = await Promise.all([
+                api.get('/clientes'),
+                api.get('/ventas'),
+                api.get('/productos'),
+                api.get(`/abonos?clienteId=${cliente.id}`)
+            ]);
+
+            const updatedClient = cliRes.data.find((c: Cliente) => c.id === cliente.id);
+            if (updatedClient) setClienteActualizado(updatedClient);
+
+            const allProducts = prodRes.data;
+            const clientSales = ventRes.data
+                .filter((v: any) => v.clienteId === cliente.id)
+                .map((v: any) => {
+                    return { ...v, producto: allProducts.find((p: any) => p.id === v.productoId), fecha: new Date(v.fecha) };
+                });
+            setVentasDetalladas(clientSales);
+
+            const abonosData = abonRes.data.map((a: any) => ({ ...a, fecha: new Date(a.fecha) }));
+            setAbonos(abonosData);
+        } catch (error) {
+            console.error('Error fetching statement data', error);
+        }
+    };
+
+    useEffect(() => {
+        loadData();
+    }, [cliente.id]);
 
     // Usar el cliente actualizado si está disponible, sino usar el prop
     const clienteDisplay = clienteActualizado || cliente;
-
-    const ventasDetalladas = ventas?.map(v => ({
-        ...v,
-        producto: productos?.find(p => p.id === v.productoId)
-    }));
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
@@ -198,7 +213,7 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                     <AddAbonoForm
                         cliente={clienteDisplay}
                         onClose={() => setIsAddAbonoOpen(false)}
-                        onSuccess={() => setIsAddAbonoOpen(false)}
+                        onSuccess={() => { setIsAddAbonoOpen(false); loadData(); }}
                     />
                 )}
                 {editingAbono && (
@@ -206,7 +221,7 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                         abono={editingAbono}
                         cliente={clienteDisplay}
                         onClose={() => setEditingAbono(null)}
-                        onSuccess={() => setEditingAbono(null)}
+                        onSuccess={() => { setEditingAbono(null); loadData(); }}
                     />
                 )}
             </div>

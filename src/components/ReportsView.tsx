@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/db';
+import { type Venta, type Producto, type Cliente } from '../db/db';
+import { api } from '../config/api';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -10,16 +10,41 @@ import {
     ChevronRight, ArrowUpRight, DollarSign, Users, Clock, ShoppingBag, X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ReportsViewProps {
     onShowCriticalStock: () => void;
 }
 
 export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock }) => {
-    const ventas = useLiveQuery(() => db.ventas.toArray());
-    const productos = useLiveQuery(() => db.productos.toArray());
-    const clientes = useLiveQuery(() => db.clientes.toArray());
+    const [ventas, setVentas] = useState<any[]>([]);
+    const [productos, setProductos] = useState<any[]>([]);
+    const [clientes, setClientes] = useState<any[]>([]);
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const [vRes, pRes, cRes] = await Promise.all([
+                    api.get('/ventas'),
+                    api.get('/productos'),
+                    api.get('/clientes')
+                ]);
+
+                // Parse dates for ventas
+                const ventasParsed = vRes.data.map((v: any) => ({
+                    ...v,
+                    fecha: new Date(v.fecha)
+                }));
+
+                setVentas(ventasParsed);
+                setProductos(pRes.data);
+                setClientes(cRes.data);
+            } catch (err) {
+                console.error('Error fetching reports data', err);
+            }
+        };
+        load();
+    }, []);
 
     const [filtroCliente, setFiltroCliente] = useState<string>('');
     const [filtroFecha, setFiltroFecha] = useState<string>('');
@@ -79,7 +104,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
         return ventas
             .filter(v => {
                 const matchCliente = filtroCliente ? v.clienteId === Number(filtroCliente) : true;
-                const matchFecha = filtroFecha ? new Date(v.fecha).toISOString().split('T')[0] === filtroFecha : true;
+                const matchFecha = filtroFecha ? v.fecha.toISOString().split('T')[0] === filtroFecha : true;
                 return matchCliente && matchFecha;
             })
             .map(v => ({

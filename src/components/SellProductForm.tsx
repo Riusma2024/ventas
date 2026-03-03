@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ShoppingBag, X, DollarSign, Users } from 'lucide-react';
-import { db, type Producto } from '../db/db';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { type Producto, type Cliente } from '../db/db';
+import { api } from '../config/api';
+import { useEffect } from 'react';
 
 interface SellProductFormProps {
     producto: Producto;
@@ -13,7 +14,13 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
     const [precioVenta, setPrecioVenta] = useState(producto.precioSugerido.toString());
     const [clienteId, setClienteId] = useState<string>('');
 
-    const clientes = useLiveQuery(() => db.clientes.toArray());
+    const [clientes, setClientes] = useState<Cliente[]>([]);
+
+    useEffect(() => {
+        api.get('/clientes')
+            .then(res => setClientes(res.data))
+            .catch(err => console.error('Error fetching clients', err));
+    }, []);
 
     const utilidad = Number(precioVenta) - producto.costo;
 
@@ -23,38 +30,21 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
         if (!idClie) return;
 
         try {
-            await db.transaction('rw', [db.ventas, db.productos, db.clientes], async () => {
-                // 1. Fetch latest product state within transaction
-                const latestProd = await db.productos.get(producto.id!);
-                if (!latestProd || latestProd.stock <= 0) throw new Error('Stock insuficiente o producto no encontrado');
-
-                // 2. Add Sale
-                await db.ventas.add({
-                    productoId: latestProd.id!,
-                    clienteId: idClie,
-                    precioVenta: Number(precioVenta),
-                    utilidad: Number(precioVenta) - latestProd.costo,
-                    fecha: new Date(),
-                    pagado: false
-                });
-
-                // 3. Update stock based on latest state
-                await db.productos.update(latestProd.id!, {
-                    stock: latestProd.stock - 1
-                });
-
-                // 4. Update Client Debt with validation
-                const client = await db.clientes.get(idClie);
-                if (client) {
-                    const currentDebt = Number(client.deudaTotal) || 0;
-                    const saleAmount = Number(precioVenta);
-
-                    await db.clientes.update(idClie, {
-                        deudaTotal: currentDebt + saleAmount
-                    });
-                    console.log(`Deuda actualizada para ${client.apodo}: ${currentDebt} + ${saleAmount} = ${currentDebt + saleAmount}`);
-                }
+            await api.post('/ventas', {
+                productoId: producto.id,
+                clienteId: idClie,
+                precioVenta: Number(precioVenta),
+                utilidad: Number(utilidad)
             });
+
+            // Actualizar deuda del cliente manualmente en esta vista
+            const client = clientes.find((c) => c.id === idClie);
+            if (client) {
+                await api.put(`/clientes/${client.id}`, {
+                    ...client,
+                    deudaTotal: Number(client.deudaTotal || 0) + Number(precioVenta)
+                });
+            }
 
             onSuccess();
         } catch (error) {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Package, Users, Users2, PieChart, Menu } from 'lucide-react';
+import { Home, Package, Users, Users2, PieChart, LogOut, Inbox } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -9,11 +10,14 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+    const { logout } = useAuth();
+
     const tabs = [
         { id: 'home', icon: Home, label: 'Inicio' },
         { id: 'inventory', icon: Package, label: 'Inventario' },
         { id: 'crm', icon: Users, label: 'Clientes' },
         { id: 'tandas', icon: Users2, label: 'Tandas' },
+        { id: 'requests', icon: Inbox, label: 'Solicitudes' },
         { id: 'reports', icon: PieChart, label: 'Resumen' },
     ];
 
@@ -31,8 +35,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                         <span className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded-lg ml-2 align-middle font-bold">V1.7</span>
                     </h1>
                 </div>
-                <button className="p-4 bg-white shadow-premium rounded-2xl text-slate-900 border border-slate-100 active:scale-90 transition-transform">
-                    <Menu size={22} strokeWidth={2.5} />
+                <button
+                    onClick={logout}
+                    title="Cerrar sesión"
+                    className="p-4 bg-white shadow-premium rounded-2xl text-red-500 border border-red-100 active:scale-90 transition-transform hover:bg-red-50"
+                >
+                    <LogOut size={22} strokeWidth={2.5} />
                 </button>
             </header>
 

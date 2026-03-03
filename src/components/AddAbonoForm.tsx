@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, DollarSign, Calendar, Camera, CheckCircle, Upload } from 'lucide-react';
-import { db, type Cliente } from '../db/db';
-import { syncClientDebtWithVerifiedPayments } from '../utils/dbUtils';
+import { type Cliente } from '../db/db';
+import { api } from '../config/api';
 
 interface AddAbonoFormProps {
     cliente: Cliente;
@@ -32,17 +32,19 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
             const montoNum = Number(monto);
 
             // Registrar el abono
-            await db.abonos.add({
+            await api.post('/abonos', {
                 clienteId: cliente.id!,
                 monto: montoNum,
-                fecha: new Date(fecha),
+                fecha: new Date(fecha).toISOString(),
                 evidencia,
                 verificado
             });
 
-            // Actualizar la deuda del cliente
-            const nuevaDeuda = Math.max(0, cliente.deudaTotal - montoNum);
-            await db.clientes.update(cliente.id!, { deudaTotal: nuevaDeuda });
+            // Actualizar la deuda del cliente si el abono está verificado (o si confías en el cliente)
+            if (verificado) {
+                const nuevaDeuda = Math.max(0, Number(cliente.deudaTotal) - montoNum);
+                await api.put(`/clientes/${cliente.id}`, { ...cliente, deudaTotal: nuevaDeuda });
+            }
 
             onSuccess();
         } catch (error) {

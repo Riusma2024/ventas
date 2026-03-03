@@ -1,39 +1,43 @@
-import { db } from '../db/db';
+import { api } from '../config/api';
 
 /**
  * Recalculates the total debt for a specific client based on their unpaid sales.
  * This ensures the deudaTotal field is always in sync with actual records.
  */
 export const syncClientDebt = async (clienteId: number) => {
-    return await db.transaction('rw', [db.clientes, db.ventas, db.abonos], async () => {
-        const client = await db.clientes.get(clienteId);
-        if (!client) return;
+    try {
+        const [ventasRes, abonosRes] = await Promise.all([
+            api.get('/ventas'),
+            api.get(`/abonos?clienteId=${clienteId}`)
+        ]);
 
-        // Sum all sales for this client
-        const ventas = await db.ventas.where('clienteId').equals(clienteId).toArray();
-        const totalVentas = ventas.reduce((acc, v) => acc + v.precioVenta, 0);
+        const ventasParams = ventasRes.data.filter((v: any) => v.clienteId === clienteId);
+        const abonosParams = abonosRes.data;
 
-        // Sum all payments (abonos) for this client
-        const abonos = await db.abonos.where('clienteId').equals(clienteId).toArray();
-        const totalAbonos = abonos.reduce((acc, a) => acc + a.monto, 0);
+        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + v.precioVenta, 0);
+        const totalAbonos = abonosParams.reduce((acc: any, a: any) => acc + a.monto, 0);
 
         const newDebt = totalVentas - totalAbonos;
 
-        await db.clientes.update(clienteId, {
-            deudaTotal: newDebt
-        });
-
+        await api.put(`/clientes/${clienteId}`, { deudaTotal: newDebt });
         return newDebt;
-    });
+    } catch (e) {
+        console.error('Error syncing debt', e);
+        return 0;
+    }
 };
 
 /**
  * Recalculates debt for ALL clients.
  */
 export const syncAllDebts = async () => {
-    const clients = await db.clientes.toArray();
-    for (const client of clients) {
-        if (client.id) await syncClientDebt(client.id);
+    try {
+        const res = await api.get('/clientes');
+        for (const client of res.data) {
+            if (client.id) await syncClientDebt(client.id);
+        }
+    } catch (e) {
+        console.error('Error syncing all debts', e);
     }
 };
 
@@ -42,26 +46,26 @@ export const syncAllDebts = async () => {
  * This is the correct way to calculate debt when payments need verification.
  */
 export const syncClientDebtWithVerifiedPayments = async (clienteId: number) => {
-    return await db.transaction('rw', [db.clientes, db.ventas, db.abonos], async () => {
-        const client = await db.clientes.get(clienteId);
-        if (!client) return;
+    try {
+        const [ventasRes, abonosRes] = await Promise.all([
+            api.get('/ventas'),
+            api.get(`/abonos?clienteId=${clienteId}`)
+        ]);
 
-        // Sum all sales for this client
-        const ventas = await db.ventas.where('clienteId').equals(clienteId).toArray();
-        const totalVentas = ventas.reduce((acc, v) => acc + v.precioVenta, 0);
+        const ventasParams = ventasRes.data.filter((v: any) => v.clienteId === clienteId);
+        const abonosParams = abonosRes.data;
 
-        // Sum ONLY verified payments (abonos)
-        const abonos = await db.abonos.where('clienteId').equals(clienteId).toArray();
-        const totalAbonosVerificados = abonos
-            .filter(a => a.verificado)
-            .reduce((acc, a) => acc + a.monto, 0);
+        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + v.precioVenta, 0);
+        const totalAbonosVerificados = abonosParams
+            .filter((a: any) => a.verificado)
+            .reduce((acc: any, a: any) => acc + a.monto, 0);
 
         const newDebt = Math.max(0, totalVentas - totalAbonosVerificados);
 
-        await db.clientes.update(clienteId, {
-            deudaTotal: newDebt
-        });
-
+        await api.put(`/clientes/${clienteId}`, { deudaTotal: newDebt });
         return newDebt;
-    });
+    } catch (e) {
+        console.error('Error syncing verified debt', e);
+        return 0;
+    }
 };

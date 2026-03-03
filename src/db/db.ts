@@ -18,6 +18,7 @@ export interface Venta {
     utilidad: number;
     fecha: Date;
     pagado: boolean;
+    estado?: 'apartado' | 'autorizado' | 'entregado' | 'cancelado';
 }
 
 export interface Cliente {

@@ -1,7 +1,8 @@
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Venta } from '../db/db';
 import { X, Clock, Package, User, DollarSign, TrendingUp } from 'lucide-react';
+import { type Venta, type Producto, type Cliente } from '../db/db';
+import { api } from '../config/api';
+import { useState, useEffect } from 'react';
 
 interface SaleDetailProps {
     venta: Venta;
@@ -9,8 +10,26 @@ interface SaleDetailProps {
 }
 
 export const SaleDetail: React.FC<SaleDetailProps> = ({ venta, onClose }) => {
-    const producto = useLiveQuery(() => db.productos.get(venta.productoId), [venta.productoId]);
-    const cliente = useLiveQuery(() => db.clientes.get(venta.clienteId), [venta.clienteId]);
+    const [producto, setProducto] = useState<Producto | null>(null);
+    const [cliente, setCliente] = useState<Cliente | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [prodRes, cliRes] = await Promise.all([
+                    api.get('/productos'),
+                    api.get('/clientes')
+                ]);
+                const p = prodRes.data.find((p: Producto) => p.id === venta.productoId);
+                const c = cliRes.data.find((c: Cliente) => c.id === venta.clienteId);
+                setProducto(p || null);
+                setCliente(c || null);
+            } catch (error) {
+                console.error('Error fetching details', error);
+            }
+        };
+        fetchData();
+    }, [venta]);
 
     if (!producto || !cliente) return null;
 

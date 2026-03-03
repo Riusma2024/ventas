@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, Save, X, Maximize2 } from 'lucide-react';
-import { db, type Producto } from '../db/db';
+import { type Producto } from '../db/db';
+import { api } from '../config/api';
 import { resizeImage } from '../utils/imageUtils';
 
 interface AddProductFormProps {
@@ -40,9 +41,9 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
             };
 
             if (producto?.id) {
-                await db.productos.update(producto.id, productData);
+                await api.put(`/productos/${producto.id}`, productData);
             } else {
-                await db.productos.add(productData);
+                await api.post('/productos', productData);
             }
             onSuccess();
         } catch (error) {

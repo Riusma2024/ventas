@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Tanda, type TandaPago } from '../db/db';
+import { type Tanda, type TandaPago } from '../db/db';
 import { Users2, Plus, Calendar, CheckCircle2, Circle, Trophy, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { api } from '../config/api';
+import { useEffect } from 'react';
 
 export const TandaManager: React.FC = () => {
     const [isCreating, setIsCreating] = useState(false);
-    const tandas = useLiveQuery(() => db.tandas.toArray());
+    const [tandas, setTandas] = useState<any[]>([]);
     const [selectedTandaId, setSelectedTandaId] = useState<number | null>(null);
 
-    const tandaActiva = useLiveQuery(
-        () => selectedTandaId ? db.tandas.get(selectedTandaId) : undefined,
-        [selectedTandaId]
-    );
+    const loadTandas = async () => {
+        try {
+            const res = await api.get('/tandas');
+            setTandas(res.data);
+        } catch (error) {
+            console.error('Error fetching tandas:', error);
+        }
+    };
 
-    const pagosTanda = useLiveQuery(
-        () => selectedTandaId ? db.tandaPagos.where('tandaId').equals(selectedTandaId).toArray() : [],
-        [selectedTandaId]
-    );
+    useEffect(() => {
+        loadTandas();
+    }, []);
+
+    const tandaActiva = tandas.find(t => t.id === selectedTandaId);
+    const pagosTanda = tandaActiva?.participantes || [];
 
     return (
         <div className="space-y-6">
@@ -71,7 +78,7 @@ export const TandaManager: React.FC = () => {
                 >
                     <h3 className="text-lg font-bold text-slate-800 px-2 mt-8">Seguimiento de Pagos</h3>
                     <div className="space-y-3">
-                        {pagosTanda?.map(p => (
+                        {pagosTanda?.map((p: any) => (
                             <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${p.esBeneficiario ? 'bg-amber-100 text-amber-600' : (p.pagado ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400')
                                     }`}>
@@ -87,7 +94,10 @@ export const TandaManager: React.FC = () => {
                                     </p>
                                     {(!p.pagado && !p.esBeneficiario) && (
                                         <button
-                                            onClick={() => db.tandaPagos.update(p.id!, { pagado: true })}
+                                            onClick={async () => {
+                                                await api.put(`/tandas/${tandaActiva.id}/participantes/${p.id}`, { pagado: true });
+                                                loadTandas();
+                                            }}
                                             className="text-[9px] font-bold text-primary-500 uppercase tracking-tighter"
                                         >
                                             Marcar Pago
@@ -106,6 +116,7 @@ export const TandaManager: React.FC = () => {
                     onSuccess={(id) => {
                         setIsCreating(false);
                         setSelectedTandaId(id);
+                        loadTandas();
                     }}
                 />
             )}
@@ -126,27 +137,27 @@ const CreateTandaForm: React.FC<CreateTandaFormProps> = ({ onClose, onSuccess })
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const tandaId = await db.tandas.add({
+            const res = await api.post('/tandas', {
                 nombre,
                 montoPorNumero: Number(monto),
                 periodicidad: 'semanal',
-                fechaInicio: new Date(),
+                fechaInicio: new Date().toISOString(),
                 participantes: 11
             });
+            const tandaId = res.data.id;
 
             // Generate seed payments for week 1
             // Logic N+1: Beneficiary of current week is exempt
             const pagos = participantes.map((name, index) => ({
-                tandaId: tandaId as number,
                 numeroSemana: 1,
                 participanteNombre: name || `Participante ${index + 1}`,
                 monto: index === 0 ? 0 : Number(monto), // Week 1 beneficiary is usually index 0
-                pagado: index === 0, // Beneficiary is marked as paid
-                esBeneficiario: index === 0
+                pagado: Boolean(index === 0), // Beneficiary is marked as paid
+                esBeneficiario: Boolean(index === 0)
             }));
 
-            await db.tandaPagos.bulkAdd(pagos);
-            onSuccess(tandaId as number);
+            await Promise.all(pagos.map((p: any) => api.post(`/tandas/${tandaId}/participantes`, p)));
+            onSuccess(tandaId);
         } catch (error) {
             console.error('Error al crear tanda:', error);
         }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, DollarSign, Calendar, CheckCircle, Edit as EditIcon } from 'lucide-react';
-import { db, type Abono, type Cliente } from '../db/db';
-import { syncClientDebtWithVerifiedPayments } from '../utils/dbUtils';
+import { type Abono, type Cliente } from '../db/db';
+import { api } from '../config/api';
 
 interface EditAbonoFormProps {
     abono: Abono;
@@ -20,10 +20,20 @@ export const EditAbonoForm: React.FC<EditAbonoFormProps> = ({ abono, cliente, on
             const isNowVerified = verificado;
 
             // Actualizar el abono
-            await db.abonos.update(abono.id!, { verificado });
+            await api.put(`/abonos/${abono.id}`, {
+                monto: abono.monto,
+                evidencia: abono.evidencia,
+                verificado
+            });
 
             // Recalcular la deuda basándose en abonos verificados
-            await syncClientDebtWithVerifiedPayments(cliente.id!);
+            if (!wasVerified && isNowVerified) {
+                const nuevaDeuda = Math.max(0, Number(cliente.deudaTotal) - Number(abono.monto));
+                await api.put(`/clientes/${cliente.id}`, { ...cliente, deudaTotal: nuevaDeuda });
+            } else if (wasVerified && !isNowVerified) {
+                const nuevaDeuda = Number(cliente.deudaTotal) + Number(abono.monto);
+                await api.put(`/clientes/${cliente.id}`, { ...cliente, deudaTotal: nuevaDeuda });
+            }
 
             onSuccess();
         } catch (error) {

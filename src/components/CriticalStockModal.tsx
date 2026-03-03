@@ -1,7 +1,8 @@
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Producto } from '../db/db';
+import { type Producto } from '../db/db';
 import { X, AlertTriangle, Package, Edit } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { api } from '../config/api';
 
 interface CriticalStockModalProps {
     onClose: () => void;
@@ -9,9 +10,13 @@ interface CriticalStockModalProps {
 }
 
 export const CriticalStockModal: React.FC<CriticalStockModalProps> = ({ onClose, onEditProduct }) => {
-    const products = useLiveQuery(() =>
-        db.productos.filter(p => p.stock <= 2).toArray()
-    );
+    const [products, setProducts] = useState<Producto[]>([]);
+
+    useEffect(() => {
+        api.get('/productos')
+            .then(res => setProducts(res.data.filter((p: Producto) => p.stock <= 2)))
+            .catch(console.error);
+    }, []);
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-fade-in">

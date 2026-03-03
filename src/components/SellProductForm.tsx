@@ -13,6 +13,7 @@ interface SellProductFormProps {
 export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onClose, onSuccess }) => {
     const [precioVenta, setPrecioVenta] = useState(producto.precioSugerido.toString());
     const [clienteId, setClienteId] = useState<string>('');
+    const [cantidad, setCantidad] = useState(1);
 
     const [clientes, setClientes] = useState<Cliente[]>([]);
 
@@ -22,7 +23,8 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
             .catch(err => console.error('Error fetching clients', err));
     }, []);
 
-    const utilidad = Number(precioVenta) - producto.costo;
+    const utilidad = (Number(precioVenta) - producto.costo) * cantidad;
+    const precioVentaTotal = Number(precioVenta) * cantidad;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,7 +36,8 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
                 productoId: producto.id,
                 clienteId: idClie,
                 precioVenta: Number(precioVenta),
-                utilidad: Number(utilidad)
+                utilidad: Number(utilidad),
+                cantidad: cantidad
             });
 
             // Actualizar deuda del cliente manualmente en esta vista
@@ -42,7 +45,7 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
             if (client) {
                 await api.put(`/clientes/${client.id}`, {
                     ...client,
-                    deudaTotal: Number(client.deudaTotal || 0) + Number(precioVenta)
+                    deudaTotal: Number(client.deudaTotal || 0) + precioVentaTotal
                 });
             }
 
@@ -99,15 +102,30 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
                         )}
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Precio Final de Venta</label>
-                        <input
-                            type="number"
-                            required
-                            className="input-field font-black text-slate-900 text-lg"
-                            value={precioVenta}
-                            onChange={(e) => setPrecioVenta(e.target.value)}
-                        />
+                    <div className="flex gap-4">
+                        <div className="space-y-2 flex-1">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Precio Final c/u</label>
+                            <input
+                                type="number"
+                                required
+                                className="input-field font-black text-slate-900 text-lg"
+                                value={precioVenta}
+                                onChange={(e) => setPrecioVenta(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2 w-32">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Cantidad</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max={producto.stock}
+                                required
+                                className="input-field font-black text-slate-900 text-lg text-center"
+                                value={cantidad}
+                                onChange={(e) => setCantidad(Math.min(producto.stock, Math.max(1, Number(e.target.value))))}
+                            />
+                        </div>
                     </div>
 
                     <div className="bg-primary-50/50 p-6 rounded-[2.5rem] border border-primary-100/50 flex justify-between items-center group overflow-hidden relative">

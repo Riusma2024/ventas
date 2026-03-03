@@ -23,6 +23,7 @@ export const PublicCatalog: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [quantities, setQuantities] = useState<Record<number, number>>({});
 
     // Carrito de compras y checkout
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -50,15 +51,20 @@ export const PublicCatalog: React.FC = () => {
         }
     }, [tenant_id]);
 
-    const addToCart = (prod: Producto) => {
+    const addToCart = (prod: Producto, quantityToAdd: number = 1) => {
         setCart(prev => {
             const existing = prev.find(item => item.id === prod.id);
             if (existing) {
-                if (existing.cantidad >= prod.stock) return prev; // Límite de stock
-                return prev.map(item => item.id === prod.id ? { ...item, cantidad: item.cantidad + 1 } : item);
+                const newQuantity = Math.min(existing.cantidad + quantityToAdd, prod.stock);
+                return prev.map(item => item.id === prod.id ? { ...item, cantidad: newQuantity } : item);
             }
-            return [...prev, { ...prod, cantidad: 1 }];
+            return [...prev, { ...prod, cantidad: Math.min(quantityToAdd, prod.stock) }];
         });
+
+        // Reset the input quantity for this product back to 1
+        if (quantities[prod.id]) {
+            setQuantities(prev => ({ ...prev, [prod.id]: 1 }));
+        }
     };
 
     const updateQuantity = (id: number, delta: number) => {
@@ -198,11 +204,33 @@ export const PublicCatalog: React.FC = () => {
                             </div>
                             <h3 className="font-bold text-slate-800 text-sm mb-1 leading-tight line-clamp-2 min-h-[40px]">{prod.nombre}</h3>
                             <p className="font-black text-primary-500 text-lg mb-4">${Number(prod.precioSugerido).toLocaleString()}</p>
+
+                            <div className="w-full mb-3 flex items-center justify-between bg-slate-50 rounded-xl border border-slate-200">
+                                <button
+                                    onClick={() => setQuantities(prev => ({ ...prev, [prod.id]: Math.max(1, (prev[prod.id] || 1) - 1) }))}
+                                    className="p-2 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                    disabled={(quantities[prod.id] || 1) <= 1}
+                                >
+                                    <Minus size={16} />
+                                </button>
+                                <span className="font-bold text-sm text-slate-700 w-8 text-center">
+                                    {quantities[prod.id] || 1}
+                                </span>
+                                <button
+                                    onClick={() => setQuantities(prev => ({ ...prev, [prod.id]: Math.min(prod.stock, (prev[prod.id] || 1) + 1) }))}
+                                    className="p-2 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                    disabled={(quantities[prod.id] || 1) >= prod.stock}
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+
                             <button
-                                onClick={() => addToCart(prod)}
-                                className="w-full py-3 bg-slate-900 border border-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-slate-900 transition-all active:scale-95"
+                                onClick={() => addToCart(prod, quantities[prod.id] || 1)}
+                                className="w-full py-3 bg-slate-900 border border-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-slate-900 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                                disabled={prod.stock <= 0}
                             >
-                                Apartar
+                                {prod.stock > 0 ? 'Apartar' : 'Agotado'}
                             </button>
                         </div>
                     ))}

@@ -53,9 +53,9 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[120] flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center px-2">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[120] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-6 animate-slide-up shadow-2xl border border-white/20 h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col">
+                <div className="flex justify-between items-center px-2 flex-shrink-0">
                     <div>
                         <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Registrar Abono</h3>
                         <p className="text-[10px] text-green-500 font-black uppercase tracking-widest">
@@ -67,7 +67,7 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6 flex-1 overflow-y-auto no-scrollbar px-2 pb-6 pt-2">
                     {/* Monto */}
                     <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Monto del Abono</label>

@@ -35,10 +35,10 @@ export const createVenta = async (req: AuthRequest, res: Response): Promise<void
     try {
         const tenant_id = req.user?.tenant_id;
         const rol = req.user?.rol;
-        const { productoId, clienteId, precioVenta, utilidad, pagado } = req.body;
+        const { productoId, clienteId, precioVenta, utilidad, pagado, cantidad = 1 } = req.body;
 
-        if (!productoId || !clienteId || precioVenta === undefined || utilidad === undefined) {
-            res.status(400).json({ error: 'Faltan datos requeridos para la venta' });
+        if (!productoId || !clienteId || precioVenta === undefined || utilidad === undefined || cantidad < 1) {
+            res.status(400).json({ error: 'Faltan datos requeridos para la venta o cantidad inválida' });
             return;
         }
 
@@ -50,28 +50,35 @@ export const createVenta = async (req: AuthRequest, res: Response): Promise<void
             return;
         }
 
-        if (productoRes[0].stock <= 0) {
-            res.status(400).json({ error: 'No hay stock disponible para este producto' });
+        if (productoRes[0].stock < cantidad) {
+            res.status(400).json({ error: 'No hay stock suficiente para esta cantidad' });
             return;
         }
 
         // Si lo solicita un cliente, queda "apartado". Si es el gestionador, es "autorizado".
         const estadoInicial = rol === 'cliente' ? 'apartado' : 'autorizado';
 
-        const [result] = await db.query<any>(
-            `INSERT INTO Ventas (tenant_id, productoId, clienteId, precioVenta, utilidad, fecha, pagado, estado) 
-             VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)`,
-            [tenant_id, productoId, clienteId, precioVenta, utilidad, pagado || false, estadoInicial]
-        );
+        const lastInsertIds = [];
+
+        // Insertar individualmente para mantener compatibilidad con BD
+        for (let i = 0; i < cantidad; i++) {
+            const [result] = await db.query<any>(
+                `INSERT INTO Ventas (tenant_id, productoId, clienteId, precioVenta, utilidad, fecha, pagado, estado) 
+                 VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)`,
+                [tenant_id, productoId, clienteId, precioVenta, utilidad, pagado || false, estadoInicial]
+            );
+            lastInsertIds.push(result.insertId);
+        }
 
         // Si es "autorizado" directamente por el Gestionador, descontamos el stock.
         if (estadoInicial === 'autorizado') {
-            await db.query('UPDATE Productos SET stock = stock - 1 WHERE id = ? AND tenant_id = ?', [productoId, tenant_id]);
+            await db.query('UPDATE Productos SET stock = stock - ? WHERE id = ? AND tenant_id = ?', [cantidad, productoId, tenant_id]);
         }
 
         res.status(201).json({
-            id: result.insertId,
-            mensaje: `Venta registrada en estado: ${estadoInicial}`,
+            id: lastInsertIds[0], // Returned for backwards compatibility
+            ids: lastInsertIds,
+            mensaje: `Venta registrada en estado: ${estadoInicial} (${cantidad} unidades)`,
             estado: estadoInicial
         });
 

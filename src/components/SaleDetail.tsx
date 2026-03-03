@@ -92,14 +92,14 @@ export const SaleDetail: React.FC<SaleDetailProps> = ({ venta, onClose }) => {
                                     <DollarSign size={14} strokeWidth={3} />
                                     <span className="text-[8px] font-black uppercase tracking-widest">Precio Venta</span>
                                 </div>
-                                <p className="text-xl font-black tracking-tighter">${venta.precioVenta.toFixed(2)}</p>
+                                <p className="text-xl font-black tracking-tighter">${Number(venta.precioVenta || 0).toFixed(2)}</p>
                             </div>
                             <div className="bg-primary-50 p-5 rounded-[2rem] border border-primary-100">
                                 <div className="flex items-center gap-2 mb-2 text-primary-500">
                                     <TrendingUp size={14} strokeWidth={3} />
                                     <span className="text-[8px] font-black uppercase tracking-widest">Utilidad</span>
                                 </div>
-                                <p className="text-xl font-black tracking-tighter text-primary-600">${venta.utilidad.toFixed(2)}</p>
+                                <p className="text-xl font-black tracking-tighter text-primary-600">${Number(venta.utilidad || 0).toFixed(2)}</p>
                             </div>
                         </div>
                     </div>

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Users, Settings, Plus, UserPlus } from 'lucide-react';
+import { LogOut, Users, Settings, Plus, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import { api } from '../config/api';
 import { AddGestionadorForm } from '../components/AddGestionadorForm';
+import { EditGestionadorForm } from '../components/EditGestionadorForm';
 
 export const SuperadminDashboard: React.FC = () => {
     const { user, logout } = useAuth();
     const [gestionadores, setGestionadores] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
+    const [editingGestionador, setEditingGestionador] = useState<any | null>(null);
 
     const loadGestionadores = async () => {
         try {
@@ -25,10 +27,21 @@ export const SuperadminDashboard: React.FC = () => {
         loadGestionadores();
     }, []);
 
+    const handleDelete = async (id: number, nombre: string) => {
+        if (window.confirm(`¿Estás seguro de que deseas eliminar al gestionador ${nombre}?`)) {
+            try {
+                await api.delete(`/users/gestionadores/${id}`);
+                loadGestionadores();
+            } catch (error: any) {
+                alert(error.response?.data?.error || 'Error al eliminar el gestionador');
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-primary-200 selection:text-primary-900 flex flex-col items-center">
             {/* Cabecera */}
-            <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-sm w-full">
+            <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-sm w-full">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
@@ -80,17 +93,38 @@ export const SuperadminDashboard: React.FC = () => {
                         </div>
                     ) : (
                         gestionadores.map(g => (
-                            <div key={g.id} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black">
-                                        {g.nombre.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-black text-slate-900 text-lg">{g.nombre}</h3>
-                                        <p className="text-xs font-bold text-slate-400">{g.email}</p>
+                            <div key={g.id} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow relative group overflow-hidden flex flex-col justify-between">
+                                {/* Acciones (hover) */}
+                                <div className="absolute top-4 right-4 flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => setEditingGestionador(g)}
+                                        className="p-2 bg-slate-50 text-slate-400 hover:text-primary-500 hover:bg-primary-50 rounded-xl transition-colors"
+                                        title="Editar Gestionador"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(g.id, g.nombre)}
+                                        className="p-2 bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                        title="Eliminar Gestionador"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black">
+                                            {g.nombre.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="pr-16">
+                                            <h3 className="font-black text-slate-900 text-lg truncate">{g.nombre}</h3>
+                                            <p className="text-xs font-bold text-slate-400 truncate">{g.email}</p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 pt-4 border-t border-slate-50">
+
+                                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 pt-4 border-t border-slate-50 mt-auto">
                                     <span>ID: #{g.id}</span>
                                     <span>Creado: {new Date(g.creado_en).toLocaleDateString()}</span>
                                 </div>
@@ -99,17 +133,28 @@ export const SuperadminDashboard: React.FC = () => {
                     )}
                 </div>
 
-                {isAdding && (
-                    <AddGestionadorForm
-                        onClose={() => setIsAdding(false)}
-                        onSuccess={() => {
-                            setIsAdding(false);
-                            loadGestionadores();
-                        }}
-                    />
-                )}
-
             </main>
+
+            {isAdding && (
+                <AddGestionadorForm
+                    onClose={() => setIsAdding(false)}
+                    onSuccess={() => {
+                        setIsAdding(false);
+                        loadGestionadores();
+                    }}
+                />
+            )}
+
+            {editingGestionador && (
+                <EditGestionadorForm
+                    gestionador={editingGestionador}
+                    onClose={() => setEditingGestionador(null)}
+                    onSuccess={() => {
+                        setEditingGestionador(null);
+                        loadGestionadores();
+                    }}
+                />
+            )}
         </div>
     );
 };

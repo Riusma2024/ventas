@@ -1,0 +1,3 @@
+﻿nombre	email	rol	password_hash
+Super Admin	admin@missventas.com	superadmin	$2b$10$8pn4FhzLSoHxswLWql5BmOBjpEBEx/6quoMeGPB.tJnp.tWbFi4j2
+mario cardiel	marioalcard4@gmail.com	gestionador	$2b$10$kwfkvHz8mLpSCHWTSC1/7.jl6yt2DM/chLC9BQ7XOqk0wav1wUgVW

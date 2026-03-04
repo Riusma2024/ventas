@@ -51,11 +51,29 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
         const tenant_id = req.user?.tenant_id;
         const { nombre, apodo, whatsapp, facebook, otro, deudaTotal } = req.body;
 
+        // Recuperar el cliente actual primero
+        const [currentClientRows] = await db.query<any[]>('SELECT * FROM Clientes_App WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
+
+        if (currentClientRows.length === 0) {
+            res.status(404).json({ error: 'Cliente no encontrado o no autorizado' });
+            return;
+        }
+
+        const currentClient = currentClientRows[0];
+
+        // Construir valores finales aplicando valores actuales si el req.body no los incluye
+        const finalNombre = nombre !== undefined ? nombre : currentClient.nombre;
+        const finalApodo = apodo !== undefined ? apodo : currentClient.apodo;
+        const finalWhatsapp = whatsapp !== undefined ? whatsapp : currentClient.whatsapp;
+        const finalFacebook = facebook !== undefined ? facebook : currentClient.facebook;
+        const finalOtro = otro !== undefined ? otro : currentClient.otro;
+        const finalDeudaTotal = deudaTotal !== undefined ? deudaTotal : currentClient.deudaTotal;
+
         const [result] = await db.query<any>(
             `UPDATE Clientes_App 
              SET nombre = ?, apodo = ?, whatsapp = ?, facebook = ?, otro = ?, deudaTotal = ?
              WHERE id = ? AND tenant_id = ?`,
-            [nombre, apodo || null, whatsapp || null, facebook || null, otro || null, deudaTotal, id, tenant_id]
+            [finalNombre, finalApodo || null, finalWhatsapp || null, finalFacebook || null, finalOtro || null, finalDeudaTotal, id, tenant_id]
         );
 
         if (result.affectedRows === 0) {

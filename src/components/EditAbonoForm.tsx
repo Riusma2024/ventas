@@ -48,7 +48,7 @@ export const EditAbonoForm: React.FC<EditAbonoFormProps> = ({ abono, cliente, on
                     <div>
                         <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Editar Abono</h3>
                         <p className="text-[10px] text-green-500 font-black uppercase tracking-widest">
-                            ${abono.monto.toFixed(2)} - {abono.fecha.toLocaleDateString()}
+                            ${Number(abono.monto).toFixed(2)} - {new Date(abono.fecha).toLocaleDateString()}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 transition-colors">

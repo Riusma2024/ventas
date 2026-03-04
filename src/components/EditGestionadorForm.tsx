@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, User, Mail, Lock } from 'lucide-react';
 import { api } from '../config/api';
 
-interface AddGestionadorFormProps {
+interface EditGestionadorFormProps {
+    gestionador: any;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose, onSuccess }) => {
-    const [nombre, setNombre] = useState('');
-    const [email, setEmail] = useState('');
+export const EditGestionadorForm: React.FC<EditGestionadorFormProps> = ({ gestionador, onClose, onSuccess }) => {
+    const [nombre, setNombre] = useState(gestionador.nombre || '');
+    const [email, setEmail] = useState(gestionador.email || '');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -21,14 +22,14 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
         setError(null);
 
         try {
-            await api.post('/users/gestionadores', {
+            await api.put(`/users/gestionadores/${gestionador.id}`, {
                 nombre,
                 email,
-                password
+                password: password || undefined // Only send password if it's changed
             });
             onSuccess();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al crear gestionador');
+            setError(err.response?.data?.error || 'Error al actualizar gestionador');
         } finally {
             setLoading(false);
         }
@@ -40,8 +41,8 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
 
                 <div className="flex justify-between items-center px-2">
                     <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Nuevo Gestionador</h3>
-                        <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">Crear cuenta de acceso</p>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Editar Gestionador</h3>
+                        <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">Modificar Cuenta de Acceso</p>
                     </div>
                     <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                         <X size={20} strokeWidth={3} />
@@ -86,17 +87,16 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 ml-2 uppercase tracking-widest">Contraseña</label>
+                        <label className="text-[10px] font-black text-slate-400 ml-2 uppercase tracking-widest">Nueva Contraseña (Opcional)</label>
                         <div className="relative">
                             <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
-                                type="password"
-                                required
+                                type="text"
                                 minLength={6}
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:border-primary-300 focus:bg-white transition-all"
-                                placeholder="Mínimo 6 caracteres"
+                                placeholder="Dejar en blanco para mantener la actual"
                             />
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
                         disabled={loading}
                         className="btn-primary w-full shadow-lg shadow-primary-500/30 flex items-center justify-center h-14"
                     >
-                        {loading ? 'Creando...' : 'Crear Gestionador'}
+                        {loading ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                 </form>
 

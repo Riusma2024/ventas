@@ -7,10 +7,11 @@ import { AddProductForm } from '../components/AddProductForm';
 import { AddClientForm } from '../components/AddClientForm';
 import { SellProductForm } from '../components/SellProductForm';
 import { TandaManager } from '../components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2 } from 'lucide-react';
 import { ReportsView } from '../components/ReportsView';
 import { PendingRequestsManager } from '../components/PendingRequestsManager';
 import { syncAllDebts } from '../utils/dbUtils';
+import { useAuth } from '../context/AuthContext';
 import { ClientAccountStatement } from '../components/ClientAccountStatement';
 import { SaleDetail } from '../components/SaleDetail';
 import { CriticalStockModal } from '../components/CriticalStockModal';
@@ -28,11 +29,18 @@ const Dashboard: React.FC = () => {
     const [isCriticalStockOpen, setIsCriticalStockOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<Cliente | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const { user } = useAuth();
 
     const [productos, setProductos] = useState<Producto[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [ventasHoy, setVentasHoy] = useState<Venta[]>([]);
     const [loadingData, setLoadingData] = useState(true);
+
+    const copyCatalogLink = () => {
+        const url = `${window.location.origin}/catalogo/${user?.id}`;
+        navigator.clipboard.writeText(url);
+        alert('¡Enlace del catálogo copiado al portapapeles!');
+    };
 
     const loadData = async () => {
         try {
@@ -147,7 +155,16 @@ const Dashboard: React.FC = () => {
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-slate-800">Inventario</h2>
-                        <button onClick={() => setIsAddProductOpen(true)} className="bg-primary-500 p-3 rounded-2xl text-white shadow-lg"><Plus size={20} /></button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={copyCatalogLink}
+                                className="bg-slate-100 p-3 rounded-2xl text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-200 transition-colors"
+                                title="Copiar enlace del catálogo"
+                            >
+                                <Share2 size={20} />
+                            </button>
+                            <button onClick={() => setIsAddProductOpen(true)} className="bg-primary-500 p-3 rounded-2xl text-white shadow-lg"><Plus size={20} /></button>
+                        </div>
                     </div>
                     {!productos || productos.length === 0 ? (
                         <div className="glass-card text-center py-12 border-dashed border-2 border-slate-200">

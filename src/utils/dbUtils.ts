@@ -11,13 +11,16 @@ export const syncClientDebt = async (clienteId: number) => {
             api.get(`/abonos?clienteId=${clienteId}`)
         ]);
 
-        const ventasParams = ventasRes.data.filter((v: any) => v.clienteId === clienteId);
+        // Solo sumar deudas de ventas reales (ignoramos cancelados o apartados pendientes)
+        const ventasParams = ventasRes.data.filter((v: any) =>
+            v.clienteId === clienteId && v.estado !== 'cancelado' && v.estado !== 'apartado'
+        );
         const abonosParams = abonosRes.data;
 
-        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + v.precioVenta, 0);
-        const totalAbonos = abonosParams.reduce((acc: any, a: any) => acc + a.monto, 0);
+        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta), 0);
+        const totalAbonos = abonosParams.reduce((acc: any, a: any) => acc + Number(a.monto), 0);
 
-        const newDebt = totalVentas - totalAbonos;
+        const newDebt = Math.max(0, totalVentas - totalAbonos);
 
         await api.put(`/clientes/${clienteId}`, { deudaTotal: newDebt });
         return newDebt;
@@ -52,13 +55,16 @@ export const syncClientDebtWithVerifiedPayments = async (clienteId: number) => {
             api.get(`/abonos?clienteId=${clienteId}`)
         ]);
 
-        const ventasParams = ventasRes.data.filter((v: any) => v.clienteId === clienteId);
+        // Filtrar apartados y cancelados
+        const ventasParams = ventasRes.data.filter((v: any) =>
+            v.clienteId === clienteId && v.estado !== 'cancelado' && v.estado !== 'apartado'
+        );
         const abonosParams = abonosRes.data;
 
-        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + v.precioVenta, 0);
+        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta), 0);
         const totalAbonosVerificados = abonosParams
             .filter((a: any) => a.verificado)
-            .reduce((acc: any, a: any) => acc + a.monto, 0);
+            .reduce((acc: any, a: any) => acc + Number(a.monto), 0);
 
         const newDebt = Math.max(0, totalVentas - totalAbonosVerificados);
 

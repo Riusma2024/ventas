@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../config/api';
 import { Inbox, CheckCircle, XCircle, ShoppingBag, Clock } from 'lucide-react';
+import { syncClientDebt } from '../utils/dbUtils';
 
 interface RequestItem {
     id: number;
@@ -10,6 +11,7 @@ interface RequestItem {
     fecha: string;
     estado: string;
     productoId: number;
+    clienteId: number;
 }
 
 export const PendingRequestsManager: React.FC = () => {
@@ -34,9 +36,12 @@ export const PendingRequestsManager: React.FC = () => {
         loadRequests();
     }, []);
 
-    const handleAction = async (id: number, action: 'autorizado' | 'cancelado') => {
+    const handleAction = async (id: number, action: 'autorizado' | 'cancelado', clienteId: number) => {
         try {
             await api.put(`/ventas/${id}/estado`, { estado: action });
+            if (action === 'autorizado') {
+                await syncClientDebt(clienteId);
+            }
             // Recargar tras actualizar
             await loadRequests();
         } catch (error: any) {
@@ -80,14 +85,14 @@ export const PendingRequestsManager: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50">
                                 <button
-                                    onClick={() => handleAction(req.id, 'cancelado')}
+                                    onClick={() => handleAction(req.id, 'cancelado', req.clienteId)}
                                     className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold border-2 border-red-100 text-red-500 hover:bg-red-50 active:scale-95 transition-all text-sm"
                                 >
                                     <XCircle size={18} />
                                     Rechazar
                                 </button>
                                 <button
-                                    onClick={() => handleAction(req.id, 'autorizado')}
+                                    onClick={() => handleAction(req.id, 'autorizado', req.clienteId)}
                                     className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600 active:scale-95 transition-all text-sm"
                                 >
                                     <CheckCircle size={18} />

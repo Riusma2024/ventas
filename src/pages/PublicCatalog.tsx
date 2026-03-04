@@ -33,6 +33,10 @@ export const PublicCatalog: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+    // Memoria de dispositivo
+    const [rememberedUser, setRememberedUser] = useState<{ nombre: string, whatsapp: string } | null>(null);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
     useEffect(() => {
         const fetchCatalog = async () => {
             try {
@@ -48,6 +52,17 @@ export const PublicCatalog: React.FC = () => {
 
         if (tenant_id) {
             fetchCatalog();
+
+            // Revisar memoria del dispositivo
+            const savedNombre = localStorage.getItem('missventas_cliente_nombre');
+            const savedWhatsapp = localStorage.getItem('missventas_cliente_whatsapp');
+
+            if (savedNombre && savedWhatsapp) {
+                setRememberedUser({ nombre: savedNombre, whatsapp: savedWhatsapp });
+                setClienteNombre(savedNombre);
+                setClienteWhatsapp(savedWhatsapp);
+                setShowWelcomeModal(true);
+            }
         }
     }, [tenant_id]);
 
@@ -103,6 +118,11 @@ export const PublicCatalog: React.FC = () => {
                 carrito: carritoPayload
             });
 
+            // Guardar en la memoria del dispositivo para la próxima vez
+            localStorage.setItem('missventas_cliente_nombre', clienteNombre);
+            localStorage.setItem('missventas_cliente_whatsapp', clienteWhatsapp);
+            setRememberedUser({ nombre: clienteNombre, whatsapp: clienteWhatsapp });
+
             setSuccessMessage('¡Solicitud enviada exitosamente! El vendedor se pondrá en contacto pronto.');
             setCart([]);
             setIsCartOpen(false);
@@ -137,6 +157,41 @@ export const PublicCatalog: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-primary-200 selection:text-primary-900">
+            {/* Modal de Bienvenida para usuarios recurrentes */}
+            {showWelcomeModal && rememberedUser && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-fade-in text-center relative overflow-hidden">
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
+                        <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-600 text-white rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-500/30 transform -rotate-3">
+                            <ShoppingBag size={36} strokeWidth={2.5} />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">¡Hola de nuevo, {rememberedUser.nombre.split(' ')[0]}!</h2>
+                        <p className="text-slate-500 font-medium mb-8">¿Deseas registrar tus apartados con este usuario?</p>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => setShowWelcomeModal(false)}
+                                className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-primary-500/20 active:scale-95 transition-all hover:bg-primary-600"
+                            >
+                                Sí, continuar como {rememberedUser.nombre.split(' ')[0]}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('missventas_cliente_nombre');
+                                    localStorage.removeItem('missventas_cliente_whatsapp');
+                                    setRememberedUser(null);
+                                    setClienteNombre('');
+                                    setClienteWhatsapp('');
+                                    setShowWelcomeModal(false);
+                                }}
+                                className="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm tracking-wide active:scale-95 transition-all hover:bg-slate-200"
+                            >
+                                No, soy otra persona
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Cabecera */}
             <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
@@ -301,28 +356,56 @@ export const PublicCatalog: React.FC = () => {
                             )}
 
                             {cart.length > 0 && (
-                                <form id="checkoutForm" onSubmit={submitApartados} className="space-y-4 pt-6 border-t border-slate-100 mt-6">
-                                    <h3 className="font-black text-slate-900 text-sm uppercase tracking-widest">Tus Datos para Apartar</h3>
-                                    <div>
-                                        <input
-                                            type="text"
-                                            required
-                                            placeholder="Nombre Completo"
-                                            value={clienteNombre}
-                                            onChange={e => setClienteNombre(e.target.value)}
-                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all"
-                                        />
-                                    </div>
-                                    <div>
-                                        <input
-                                            type="tel"
-                                            required
-                                            placeholder="WhatsApp (ej. 5512345678)"
-                                            value={clienteWhatsapp}
-                                            onChange={e => setClienteWhatsapp(e.target.value)}
-                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all"
-                                        />
-                                    </div>
+                                <form id="checkoutForm" onSubmit={submitApartados} className="space-y-4 pt-6 border-t border-slate-100 mt-6 pb-2">
+                                    <h3 className="font-black text-slate-900 text-sm uppercase tracking-widest text-center">Tus Datos para Apartar</h3>
+
+                                    {rememberedUser ? (
+                                        <div className="bg-primary-50 p-4 rounded-xl border border-primary-100 flex flex-col gap-2 relative overflow-hidden group">
+                                            <div className="absolute right-0 top-0 w-16 h-16 bg-primary-500/10 rounded-bl-full"></div>
+                                            <div className="flex justify-between items-center z-10">
+                                                <div>
+                                                    <p className="font-black text-slate-800 text-lg tracking-tight">{clienteNombre}</p>
+                                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{clienteWhatsapp}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setRememberedUser(null);
+                                                    setClienteNombre('');
+                                                    setClienteWhatsapp('');
+                                                    localStorage.removeItem('missventas_cliente_nombre');
+                                                    localStorage.removeItem('missventas_cliente_whatsapp');
+                                                }}
+                                                className="text-primary-500 text-xs font-black uppercase tracking-widest text-left hover:underline mt-1 z-10 w-max"
+                                            >
+                                                Cambiar cuenta
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="Nombre Completo"
+                                                    value={clienteNombre}
+                                                    onChange={e => setClienteNombre(e.target.value)}
+                                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="tel"
+                                                    required
+                                                    placeholder="WhatsApp (ej. 5512345678)"
+                                                    value={clienteWhatsapp}
+                                                    onChange={e => setClienteWhatsapp(e.target.value)}
+                                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
                                 </form>
                             )}
 

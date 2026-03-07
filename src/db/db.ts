@@ -29,6 +29,7 @@ export interface Cliente {
     facebook?: string;
     otro?: string;
     deudaTotal: number;
+    codigo_cliente?: string;
 }
 
 export interface Abono {

@@ -6,12 +6,12 @@ import { AuthRequest } from '../middleware/auth.middleware';
 export const getTandas = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const tenant_id = req.user?.tenant_id;
-        const [rows] = await db.query<any[]>('SELECT * FROM Tandas WHERE tenant_id = ? ORDER BY fechaInicio DESC', [tenant_id]);
+        const [rows] = await db.query<any[]>('SELECT * FROM tandas WHERE tenant_id = ? ORDER BY fechaInicio DESC', [tenant_id]);
 
         // Agregar los participantes a cada tanda para que el front lo reciba ordenado
         const tandas = await Promise.all(rows.map(async (tanda: any) => {
             const [participantes] = await db.query<any[]>(
-                'SELECT * FROM TandaPagos WHERE tandaId = ? ORDER BY numeroSemana ASC',
+                'SELECT * FROM tandapagos WHERE tandaId = ? ORDER BY numeroSemana ASC',
                 [tanda.id]
             );
             return {
@@ -39,7 +39,7 @@ export const createTanda = async (req: AuthRequest, res: Response): Promise<void
         }
 
         const [result] = await db.query<any>(
-            `INSERT INTO Tandas (tenant_id, nombre, montoPorNumero, periodicidad, fechaInicio, participantes) 
+            `INSERT INTO tandas (tenant_id, nombre, montoPorNumero, periodicidad, fechaInicio, participantes) 
              VALUES (?, ?, ?, ?, ?, ?)`,
             [tenant_id, nombre, montoPorNumero, periodicidad, fechaInicio, participantes]
         );
@@ -68,7 +68,7 @@ export const addParticipante = async (req: AuthRequest, res: Response): Promise<
         }
 
         const [result] = await db.query<any>(
-            `INSERT INTO TandaPagos (tenant_id, tandaId, numeroSemana, participanteNombre, monto) 
+            `INSERT INTO tandapagos (tenant_id, tandaId, numeroSemana, participanteNombre, monto) 
              VALUES (?, ?, ?, ?, ?)`,
             [tenant_id, tandaId, numeroSemana, participanteNombre, monto]
         );
@@ -88,7 +88,7 @@ export const updateParticipante = async (req: AuthRequest, res: Response): Promi
         const { pagado, esBeneficiario, evidencia } = req.body;
 
         const [result] = await db.query<any>(
-            'UPDATE TandaPagos SET pagado = COALESCE(?, pagado), esBeneficiario = COALESCE(?, esBeneficiario), evidencia = COALESCE(?, evidencia) WHERE id = ? AND tandaId = ? AND tenant_id = ?',
+            'UPDATE tandapagos SET pagado = COALESCE(?, pagado), esBeneficiario = COALESCE(?, esBeneficiario), evidencia = COALESCE(?, evidencia) WHERE id = ? AND tandaId = ? AND tenant_id = ?',
             [pagado, esBeneficiario, evidencia, idParticipante, tandaId, tenant_id]
         );
 
@@ -111,7 +111,7 @@ export const deleteTanda = async (req: AuthRequest, res: Response): Promise<void
         const tenant_id = req.user?.tenant_id;
 
         const [result] = await db.query<any>(
-            'DELETE FROM Tandas WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM tandas WHERE id = ? AND tenant_id = ?',
             [id, tenant_id]
         );
 

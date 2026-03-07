@@ -1,30 +1,59 @@
 import React, { useState } from 'react';
-import { ShoppingBag, X, DollarSign, Users } from 'lucide-react';
+import { ShoppingBag, X, Users, UserPlus, ShoppingCart } from 'lucide-react';
 import { type Producto, type Cliente } from '../db/db';
 import { api } from '../config/api';
 import { useEffect } from 'react';
+import { AddClientForm } from './AddClientForm';
 
 interface SellProductFormProps {
     producto: Producto;
     onClose: () => void;
     onSuccess: () => void;
+    onAddToCart?: (item: { producto: Producto; cantidad: number; precioVenta: number; utilidad: number; clienteId?: string }) => void;
+    cartClienteId?: string;
 }
 
-export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onClose, onSuccess }) => {
+export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onClose, onSuccess, onAddToCart, cartClienteId }) => {
     const [precioVenta, setPrecioVenta] = useState(producto.precioSugerido.toString());
-    const [clienteId, setClienteId] = useState<string>('');
+    const [clienteId, setClienteId] = useState<string>(cartClienteId || '');
     const [cantidad, setCantidad] = useState(1);
+    const [showAddClient, setShowAddClient] = useState(false);
 
     const [clientes, setClientes] = useState<Cliente[]>([]);
 
-    useEffect(() => {
-        api.get('/clientes')
-            .then(res => setClientes(res.data))
-            .catch(err => console.error('Error fetching clients', err));
-    }, []);
-
     const utilidad = (Number(precioVenta) - producto.costo) * cantidad;
     const precioVentaTotal = Number(precioVenta) * cantidad;
+
+    const handleAddToCart = () => {
+        if (cartClienteId && clienteId && cartClienteId !== clienteId) {
+            alert('¡Ojo! Tienes un carrito de compras pendiente con otro cliente distinto.\n\nPor favor usa el cliente del carrito que ya empezaste, o ve a tu carrito y vacíalo antes de cambiar de cliente para evitar errores de envío.');
+            return;
+        }
+
+        if (onAddToCart) {
+            onAddToCart({
+                producto,
+                cantidad,
+                precioVenta: Number(precioVenta),
+                utilidad,
+                clienteId: clienteId || undefined
+            });
+        }
+    };
+
+    const fetchClientes = async (selectId?: string | number) => {
+        try {
+            const res = await api.get('/clientes');
+            setClientes(res.data);
+            if (selectId) setClienteId(selectId.toString());
+        } catch (err) {
+            console.error('Error fetching clients', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchClientes();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,22 +109,31 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Asignar a Cliente</label>
-                        <div className="relative">
-                            <select
-                                required
-                                className="input-field appearance-none"
-                                value={clienteId}
-                                onChange={(e) => setClienteId(e.target.value)}
-                            >
-                                <option value="">Seleccionar cliente...</option>
-                                {clientes?.map(c => (
-                                    <option key={c.id} value={c.id}>{c.apodo} — {c.nombre}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                <Users size={18} />
+                        <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Asignar a Cliente (Opcional si usas carrito)</label>
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <select
+                                    className="input-field appearance-none w-full"
+                                    value={clienteId}
+                                    onChange={(e) => setClienteId(e.target.value)}
+                                >
+                                    <option value="">Seleccionar cliente...</option>
+                                    {clientes?.map(c => (
+                                        <option key={c.id} value={c.id}>{c.apodo} — {c.nombre}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                    <Users size={18} />
+                                </div>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddClient(true)}
+                                className="bg-primary-50 text-primary-500 rounded-[1.5rem] px-5 flex items-center justify-center border border-primary-100 hover:bg-primary-100 transition-colors active:scale-95"
+                                title="Añadir nuevo cliente"
+                            >
+                                <UserPlus size={20} strokeWidth={2.5} />
+                            </button>
                         </div>
                         {(!clientes || clientes.length === 0) && (
                             <p className="text-[10px] text-red-500 font-black ml-4 uppercase tracking-tighter">¡No hay clientes registrados!</p>
@@ -128,27 +166,53 @@ export const SellProductForm: React.FC<SellProductFormProps> = ({ producto, onCl
                         </div>
                     </div>
 
-                    <div className="bg-primary-50/50 p-6 rounded-[2.5rem] border border-primary-100/50 flex justify-between items-center group overflow-hidden relative">
-                        <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-primary-500/5 rounded-full blur-xl group-hover:bg-primary-500/10 transition-all"></div>
+                    <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 flex justify-between items-center group overflow-hidden relative">
+                        <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-slate-200/50 rounded-full blur-xl group-hover:bg-slate-300/50 transition-all"></div>
                         <div>
-                            <p className="text-[9px] font-black text-primary-400 uppercase tracking-[0.2em] mb-1">Ganancia Neta</p>
-                            <h4 className="text-2xl font-black text-primary-600 tracking-tighter">${utilidad.toFixed(2)}</h4>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Subtotal a Cobrar</p>
+                            <h4 className="text-2xl font-black text-slate-900 tracking-tighter">${precioVentaTotal.toFixed(2)}</h4>
                         </div>
-                        <div className="w-12 h-12 bg-primary-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30">
-                            <DollarSign size={20} strokeWidth={3} />
+                        <div className="w-12 h-12 bg-white border border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center shadow-sm">
+                            <ShoppingBag size={20} strokeWidth={3} />
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={!clienteId}
-                        className="btn-primary w-full shadow-2xl disabled:opacity-30 disabled:grayscale"
-                    >
-                        <ShoppingBag size={20} strokeWidth={3} />
-                        Confirmar y Cargar Deuda
-                    </button>
+                    <div className="flex gap-3">
+                        {onAddToCart && (
+                            <button
+                                type="button"
+                                onClick={handleAddToCart}
+                                className="flex-1 bg-slate-50 text-slate-900 font-bold p-4 rounded-2xl border border-slate-200 shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                <ShoppingCart size={20} />
+                                Al Carrito
+                            </button>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={!clienteId}
+                            className={`${onAddToCart ? 'flex-1' : 'w-full'} btn-primary shadow-2xl disabled:opacity-30 disabled:grayscale`}
+                        >
+                            <ShoppingBag size={20} strokeWidth={3} />
+                            Vender Ahora
+                        </button>
+                    </div>
                 </form>
             </div>
+
+            {showAddClient && (
+                <AddClientForm
+                    onClose={() => setShowAddClient(false)}
+                    onSuccess={(newClientId?: number) => {
+                        setShowAddClient(false);
+                        if (newClientId) {
+                            fetchClientes(newClientId);
+                        } else {
+                            fetchClientes();
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };

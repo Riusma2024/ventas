@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../config/api';
-import { Inbox, CheckCircle, XCircle, ShoppingBag, Clock } from 'lucide-react';
+import { Inbox, CheckCircle, XCircle, ShoppingBag, Clock, Phone } from 'lucide-react';
 import { syncClientDebt } from '../utils/dbUtils';
 
 interface RequestItem {
@@ -12,6 +12,7 @@ interface RequestItem {
     estado: string;
     productoId: number;
     clienteId: number;
+    clienteWhatsapp?: string;
 }
 
 export const PendingRequestsManager: React.FC = () => {
@@ -76,7 +77,22 @@ export const PendingRequestsManager: React.FC = () => {
                                         Pendiente
                                     </span>
                                     <h3 className="font-bold text-slate-900 text-lg leading-tight">{req.productoNombre}</h3>
-                                    <p className="text-sm font-medium text-slate-500">Solicitado por: <span className="text-slate-800 font-bold">{req.clienteNombre}</span></p>
+                                    <div className="flex flex-col gap-1 mt-1">
+                                        <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                                            Solicitado por: <span className="text-slate-800 font-bold">{req.clienteNombre}</span>
+                                        </p>
+                                        {req.clienteWhatsapp && (
+                                            <a
+                                                href={`https://wa.me/${req.clienteWhatsapp.replace(/\D/g, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 bg-green-50 text-green-600 px-3 py-1 rounded-xl text-xs font-black w-max hover:bg-green-100 transition-colors border border-green-100"
+                                            >
+                                                <Phone size={12} strokeWidth={3} />
+                                                {req.clienteWhatsapp}
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-black text-primary-500 text-xl tracking-tighter">${req.precioVenta.toLocaleString()}</p>

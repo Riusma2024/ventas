@@ -7,9 +7,10 @@ import { AddProductForm } from '../components/AddProductForm';
 import { AddClientForm } from '../components/AddClientForm';
 import { SellProductForm } from '../components/SellProductForm';
 import { TandaManager } from '../components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2 } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2, ShoppingCart } from 'lucide-react';
 import { ReportsView } from '../components/ReportsView';
 import { PendingRequestsManager } from '../components/PendingRequestsManager';
+import { CartModal, type CartItem } from '../components/CartModal';
 import { syncAllDebts } from '../utils/dbUtils';
 import { useAuth } from '../context/AuthContext';
 import { ClientAccountStatement } from '../components/ClientAccountStatement';
@@ -30,6 +31,10 @@ const Dashboard: React.FC = () => {
     const [editingClient, setEditingClient] = useState<Cliente | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const { user } = useAuth();
+
+    const [cart, setCart] = useState<CartItem[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [cartClienteId, setCartClienteId] = useState<string>('');
 
     const [productos, setProductos] = useState<Producto[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -166,6 +171,24 @@ const Dashboard: React.FC = () => {
                             <button onClick={() => setIsAddProductOpen(true)} className="bg-primary-500 p-3 rounded-2xl text-white shadow-lg"><Plus size={20} /></button>
                         </div>
                     </div>
+
+                    {cart.length > 0 && (
+                        <button
+                            onClick={() => setIsCartOpen(true)}
+                            className="bg-accent text-white p-4 rounded-3xl shadow-2xl flex items-center gap-3 w-full animate-slide-up group"
+                        >
+                            <div className="bg-white/20 p-2 rounded-xl group-hover:bg-white/30 transition-colors">
+                                <ShoppingCart size={24} />
+                            </div>
+                            <div className="text-left flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/80">Carrito Activo</p>
+                                <h4 className="font-bold">{cart.length} {cart.length === 1 ? 'producto' : 'productos'} en cola</h4>
+                            </div>
+                            <div className="font-black text-xl tracking-tighter">
+                                ${cart.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0).toFixed(2)}
+                            </div>
+                        </button>
+                    )}
                     {!productos || productos.length === 0 ? (
                         <div className="glass-card text-center py-12 border-dashed border-2 border-slate-200">
                             <Package size={48} className="mx-auto text-slate-200 mb-4" />
@@ -284,21 +307,56 @@ const Dashboard: React.FC = () => {
                                             <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
                                                 {c.nombre ? c.nombre[0].toUpperCase() : '?'}
                                             </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-black text-slate-900 text-base tracking-tighter">{c.apodo || c.nombre}</h4>
-                                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{c.nombre}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-black text-slate-900 text-base tracking-tighter truncate">{c.apodo || c.nombre}</h4>
+                                                <div className="flex items-center gap-1.5 overflow-hidden">
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{c.nombre}</p>
+                                                    {c.whatsapp && (
+                                                        <>
+                                                            <span className="text-slate-300 text-[10px]">•</span>
+                                                            <p className="text-[10px] text-green-600 font-black tracking-tight">{c.whatsapp}</p>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                {c.codigo_cliente && (
+                                                    <p className="text-[9px] bg-slate-100 text-slate-500 font-black px-1.5 py-0.5 rounded mt-1 w-max tracking-tighter">ID: {c.codigo_cliente}</p>
+                                                )}
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
-                                                <p className="font-black text-red-500 text-lg tracking-tighter">${Number(c.deudaTotal).toFixed(2)}</p>
+                                                {Number(c.deudaTotal) <= 0 ? (
+                                                    <span className="inline-flex bg-green-100 text-green-600 text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider">
+                                                        Saldado
+                                                    </span>
+                                                ) : (
+                                                    <p className="font-black text-red-500 text-lg tracking-tighter">${Number(c.deudaTotal).toFixed(2)}</p>
+                                                )}
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => setEditingClient(c)}
-                                            className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 active:scale-90 transition-all opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Edit size={16} strokeWidth={3} />
-                                        </button>
+                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {c.whatsapp && c.codigo_cliente && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const msg = encodeURIComponent(`Hola ${c.apodo || c.nombre}, tu código de cliente para el catálogo es: *${c.codigo_cliente}*. Úsalo para ver tu saldo y productos aquí: ${window.location.origin}/catalogo/${user?.id}`);
+                                                        window.open(`https://wa.me/${c.whatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                                                    }}
+                                                    className="p-3 bg-green-100 text-green-600 rounded-xl hover:bg-green-200 active:scale-90 transition-all"
+                                                    title="Compartir ID por WhatsApp"
+                                                >
+                                                    <Share2 size={16} strokeWidth={3} />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingClient(c);
+                                                }}
+                                                className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 active:scale-90 transition-all"
+                                            >
+                                                <Edit size={16} strokeWidth={3} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                         </div>
@@ -316,7 +374,33 @@ const Dashboard: React.FC = () => {
             {editingProduct && <AddProductForm producto={editingProduct} onClose={() => setEditingProduct(null)} onSuccess={() => { setEditingProduct(null); loadData(); }} />}
             {isAddClientOpen && <AddClientForm onClose={() => setIsAddClientOpen(false)} onSuccess={() => { setIsAddClientOpen(false); loadData(); }} />}
             {editingClient && <AddClientForm cliente={editingClient} onClose={() => setEditingClient(null)} onSuccess={() => { setEditingClient(null); loadData(); }} />}
-            {selectedProduct && <SellProductForm producto={selectedProduct} onClose={() => setSelectedProduct(null)} onSuccess={() => { setSelectedProduct(null); loadData(); }} />}
+            {selectedProduct && <SellProductForm
+                producto={selectedProduct}
+                cartClienteId={cartClienteId}
+                onClose={() => setSelectedProduct(null)}
+                onSuccess={() => { setSelectedProduct(null); loadData(); }}
+                onAddToCart={(item: any) => {
+                    if (item.clienteId && !cartClienteId) setCartClienteId(item.clienteId);
+                    setCart([...cart, { ...item, id: Date.now().toString() }]);
+                    setSelectedProduct(null);
+                }}
+            />}
+
+            {isCartOpen && (
+                <CartModal
+                    items={cart}
+                    initialClienteId={cartClienteId}
+                    onClose={() => setIsCartOpen(false)}
+                    onRemoveItem={(id) => setCart(cart.filter(item => item.id !== id))}
+                    onClearCart={() => { setCart([]); setCartClienteId(''); }}
+                    onSuccess={() => {
+                        setIsCartOpen(false);
+                        setCartClienteId('');
+                        loadData();
+                        alert('¡Ventas registradas y deuda cargada exitosamente!');
+                    }}
+                />
+            )}
             {selectedClientAccount && <ClientAccountStatement cliente={selectedClientAccount} onClose={() => setSelectedClientAccount(null)} />}
             {selectedSale && <SaleDetail venta={selectedSale} onClose={() => setSelectedSale(null)} />}
             {isCriticalStockOpen && (

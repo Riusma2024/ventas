@@ -12,7 +12,7 @@ export const getProductos = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        const [rows] = await db.query<any[]>('SELECT * FROM Productos WHERE tenant_id = ?', [tenant_id]);
+        const [rows] = await db.query<any[]>('SELECT * FROM productos WHERE tenant_id = ?', [tenant_id]);
         res.json(rows);
     } catch (error) {
         console.error('Error al obtener productos:', error);
@@ -34,7 +34,7 @@ export const createProducto = async (req: AuthRequest, res: Response): Promise<v
         const initialStock = stock || 0;
 
         const [result] = await db.query<any>(
-            'INSERT INTO Productos (tenant_id, nombre, costo, precioSugerido, categoria, foto, stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO productos (tenant_id, nombre, costo, precioSugerido, categoria, foto, stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [tenant_id, nombre, costo, precioSugerido, categoria || null, foto || null, initialStock]
         );
 
@@ -53,7 +53,7 @@ export const updateProducto = async (req: AuthRequest, res: Response): Promise<v
         const { nombre, costo, precioSugerido, categoria, foto, stock } = req.body;
 
         const [result] = await db.query<any>(
-            `UPDATE Productos 
+            `UPDATE productos 
              SET nombre = ?, costo = ?, precioSugerido = ?, categoria = ?, foto = ?, stock = ?
              WHERE id = ? AND tenant_id = ?`,
             [nombre, costo, precioSugerido, categoria || null, foto || null, stock, id, tenant_id]
@@ -78,7 +78,7 @@ export const deleteProducto = async (req: AuthRequest, res: Response): Promise<v
         const tenant_id = req.user?.tenant_id;
 
         const [result] = await db.query<any>(
-            'DELETE FROM Productos WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM productos WHERE id = ? AND tenant_id = ?',
             [id, tenant_id]
         );
 

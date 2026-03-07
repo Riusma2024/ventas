@@ -6,7 +6,7 @@ import { api } from '../config/api';
 interface AddClientFormProps {
     cliente?: Cliente;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (newClientId?: number) => void;
 }
 
 export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, onSuccess }) => {
@@ -34,10 +34,11 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
 
             if (cliente?.id) {
                 await api.put(`/clientes/${cliente.id}`, clientData);
+                onSuccess(cliente.id);
             } else {
-                await api.post('/clientes', clientData);
+                const res = await api.post('/clientes', clientData);
+                onSuccess(res.data.id);
             }
-            onSuccess();
         } catch (err: any) {
             console.error('Error al guardar cliente:', err);
             setError(err.response?.data?.error || 'Ocurrió un error al guardar. Verifica los datos.');

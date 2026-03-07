@@ -8,7 +8,7 @@ export const getAbonos = async (req: AuthRequest, res: Response): Promise<void> 
         const tenant_id = req.user?.tenant_id;
         const { clienteId } = req.query;
 
-        let query = 'SELECT * FROM Abonos WHERE tenant_id = ?';
+        let query = 'SELECT * FROM abonos WHERE tenant_id = ?';
         const params: any[] = [tenant_id];
 
         if (clienteId) {
@@ -42,7 +42,7 @@ export const createAbono = async (req: AuthRequest, res: Response): Promise<void
         const esVerificado = rol === 'cliente' ? false : (verificado || false);
 
         const [result] = await db.query<any>(
-            `INSERT INTO Abonos (tenant_id, clienteId, monto, evidencia, fecha, verificado) 
+            `INSERT INTO abonos (tenant_id, clienteId, monto, evidencia, fecha, verificado) 
              VALUES (?, ?, ?, ?, NOW(), ?)`,
             [tenant_id, clienteId, monto, evidencia || null, esVerificado]
         );
@@ -67,7 +67,7 @@ export const updateAbono = async (req: AuthRequest, res: Response): Promise<void
         const { monto, evidencia, verificado } = req.body;
 
         const [result] = await db.query<any>(
-            'UPDATE Abonos SET monto = ?, evidencia = ?, verificado = ? WHERE id = ? AND tenant_id = ?',
+            'UPDATE abonos SET monto = ?, evidencia = ?, verificado = ? WHERE id = ? AND tenant_id = ?',
             [monto, evidencia, verificado, id, tenant_id]
         );
 
@@ -90,7 +90,7 @@ export const deleteAbono = async (req: AuthRequest, res: Response): Promise<void
         const tenant_id = req.user?.tenant_id;
 
         const [result] = await db.query<any>(
-            'DELETE FROM Abonos WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM abonos WHERE id = ? AND tenant_id = ?',
             [id, tenant_id]
         );
 

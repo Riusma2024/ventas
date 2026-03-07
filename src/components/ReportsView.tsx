@@ -68,8 +68,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
             const vDate = new Date(v.fecha).toDateString();
             const dayEntry = last7Days.find(d => d.baseDate === vDate);
             if (dayEntry) {
-                dayEntry.ventas += v.precioVenta;
-                dayEntry.utilidad += v.utilidad;
+                dayEntry.ventas += Number(v.precioVenta || 0);
+                dayEntry.utilidad += Number(v.utilidad || 0);
             }
         });
 
@@ -78,11 +78,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
 
     // Summary Metrics
     const metrics = useMemo(() => {
-        const totalVentas = ventas?.reduce((acc, v) => acc + v.precioVenta, 0) || 0;
-        const totalUtilidad = ventas?.reduce((acc, v) => acc + v.utilidad, 0) || 0;
-        const inversionInventario = productos?.reduce((acc, p) => acc + (p.costo * p.stock), 0) || 0;
-        const valorVentaEsperado = productos?.reduce((acc, p) => acc + (p.precioSugerido * p.stock), 0) || 0;
-        const deudaTotal = clientes?.reduce((acc, c) => acc + c.deudaTotal, 0) || 0;
+        const totalVentas = ventas?.reduce((acc, v) => acc + Number(v.precioVenta || 0), 0) || 0;
+        const totalUtilidad = ventas?.reduce((acc, v) => acc + Number(v.utilidad || 0), 0) || 0;
+        const inversionInventario = productos?.reduce((acc, p) => acc + (Number(p.costo || 0) * Number(p.stock || 0)), 0) || 0;
+        const valorVentaEsperado = productos?.reduce((acc, p) => acc + (Number(p.precioSugerido || 0) * Number(p.stock || 0)), 0) || 0;
+        const deudaTotal = clientes?.reduce((acc, c) => acc + Number(c.deudaTotal || 0), 0) || 0;
         const stockBajo = productos?.filter(p => p.stock <= 2 && p.stock > 0).length || 0;
         const agotados = productos?.filter(p => p.stock === 0).length || 0;
 
@@ -353,10 +353,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
                                     <div className="text-right pl-2">
                                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Venta</p>
                                         <p className="text-lg font-black text-primary-600 tracking-tighter leading-none">
-                                            ${v.precioVenta.toFixed(2)}
+                                            ${Number(v.precioVenta || 0).toFixed(2)}
                                         </p>
                                         <p className="text-[9px] font-bold text-slate-400 mt-1">
-                                            Ganó: +${v.utilidad.toFixed(2)}
+                                            Ganó: +${Number(v.utilidad || 0).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>

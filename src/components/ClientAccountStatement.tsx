@@ -74,23 +74,23 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                     </div>
 
                     {/* Contact Info Chips */}
-                    <div className="flex flex-wrap gap-2 px-1 flex-shrink-0">
+                    <div className="flex flex-wrap gap-3 px-1 flex-shrink-0">
                         {clienteDisplay.whatsapp && (
-                            <div className="flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1.5 rounded-xl border border-green-100">
-                                <Phone size={12} strokeWidth={3} />
-                                <span className="text-[10px] font-black uppercase tracking-tighter">{clienteDisplay.whatsapp}</span>
+                            <div className="flex items-center gap-2 bg-green-50 text-green-600 px-4 py-2 rounded-2xl border border-green-100 shadow-sm">
+                                <Phone size={16} strokeWidth={3} />
+                                <span className="text-sm font-black uppercase tracking-tight">{clienteDisplay.whatsapp}</span>
                             </div>
                         )}
                         {clienteDisplay.facebook && (
-                            <div className="flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl border border-blue-100">
-                                <Facebook size={12} strokeWidth={3} />
-                                <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[100px]">{clienteDisplay.facebook}</span>
+                            <div className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-2xl border border-blue-100 shadow-sm">
+                                <Facebook size={16} strokeWidth={3} />
+                                <span className="text-sm font-black uppercase tracking-tight truncate max-w-[120px]">{clienteDisplay.facebook}</span>
                             </div>
                         )}
                         {clienteDisplay.otro && (
-                            <div className="flex items-center gap-2 bg-slate-50 text-slate-600 px-3 py-1.5 rounded-xl border border-slate-100">
-                                <Globe size={12} strokeWidth={3} />
-                                <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[100px]">{clienteDisplay.otro}</span>
+                            <div className="flex items-center gap-2 bg-slate-50 text-slate-600 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+                                <Globe size={16} strokeWidth={3} />
+                                <span className="text-sm font-black uppercase tracking-tight truncate max-w-[120px]">{clienteDisplay.otro}</span>
                             </div>
                         )}
                     </div>
@@ -101,7 +101,14 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                         <div className="flex justify-between items-center relative z-10">
                             <div>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Deuda Total</p>
-                                <h2 className="text-4xl font-black tracking-tighter text-red-400">${Number(clienteDisplay.deudaTotal || 0).toFixed(2)}</h2>
+                                {Number(clienteDisplay.deudaTotal || 0) <= 0 ? (
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle className="text-green-400" size={24} />
+                                        <h2 className="text-3xl font-black tracking-tighter text-green-400 uppercase">Sin Adeudo</h2>
+                                    </div>
+                                ) : (
+                                    <h2 className="text-4xl font-black tracking-tighter text-red-400">${Number(clienteDisplay.deudaTotal || 0).toFixed(2)}</h2>
+                                )}
                             </div>
                             <button
                                 onClick={() => setIsAddAbonoOpen(true)}

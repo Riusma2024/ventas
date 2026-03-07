@@ -5,6 +5,7 @@ import { db } from '../config/db';
 export const getPublicCatalog = async (req: Request, res: Response): Promise<void> => {
     try {
         const { tenant_id } = req.params;
+        const { clienteId } = req.query;
 
         if (!tenant_id) {
             res.status(400).json({ error: 'ID de catálogo (tenant) requerido' });
@@ -13,13 +14,23 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
 
         // Obtener solo productos con stock > 0
         const [rows] = await db.query<any[]>(
-            'SELECT id, nombre, precioSugerido, foto, stock, categoria FROM Productos WHERE tenant_id = ? AND stock > 0',
+            'SELECT id, nombre, precioSugerido, foto, stock, categoria FROM productos WHERE tenant_id = ? AND stock > 0',
             [tenant_id]
         );
 
+        // Si se provee clienteId, obtener su estado actual
+        let clienteData = null;
+        if (clienteId) {
+            const [cRows] = await db.query<any[]>(
+                'SELECT id, nombre, whatsapp, deudaTotal, codigo_cliente FROM clientes_app WHERE id = ? AND tenant_id = ?',
+                [clienteId, tenant_id]
+            );
+            if (cRows.length > 0) clienteData = cRows[0];
+        }
+
         // Obtener nombre del gestionador para personalizar la vista
         const [tenantRows] = await db.query<any[]>(
-            'SELECT nombre FROM Usuarios WHERE id = ? AND rol = "gestionador"',
+            'SELECT nombre FROM usuarios WHERE id = ? AND rol = "gestionador"',
             [tenant_id]
         );
 
@@ -30,11 +41,21 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
 
         res.json({
             negocio: tenantRows[0].nombre,
-            productos: rows
+            productos: rows,
+            cliente: clienteData
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error al obtener catálogo público:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' ' + error.stack + '\n');
+
+        let errorMsg = 'Error interno del servidor';
+        if (error.code === 'ER_CON_COUNT_ERROR') {
+            errorMsg = 'El servidor está temporalmente sobrecargado (límite de conexiones). Intenta de nuevo en unos segundos.';
+        } else if (error.message) {
+            errorMsg = 'Error DB temporal: ' + error.message;
+        }
+
+        res.status(500).json({ error: errorMsg });
     }
 };
 
@@ -53,7 +74,7 @@ export const submitApartados = async (req: Request, res: Response): Promise<void
         let clienteId: number;
 
         const [existingClient] = await db.query<any[]>(
-            'SELECT id FROM Clientes_App WHERE tenant_id = ? AND whatsapp = ?',
+            'SELECT id FROM clientes_app WHERE tenant_id = ? AND whatsapp = ?',
             [tenant_id, cliente.whatsapp]
         );
 
@@ -62,10 +83,12 @@ export const submitApartados = async (req: Request, res: Response): Promise<void
         } else {
             // Crear el cliente si no existe
             const [newClient] = await db.query<any>(
-                'INSERT INTO Clientes_App (tenant_id, nombre, whatsapp) VALUES (?, ?, ?)',
-                [tenant_id, cliente.nombre, cliente.whatsapp]
+                'INSERT INTO clientes_app (tenant_id, nombre, whatsapp, codigo_cliente) VALUES (?, ?, ?, ?)',
+                [tenant_id, cliente.nombre, cliente.whatsapp, 'PENDIENTE']
             );
             clienteId = newClient.insertId;
+            const codigo = `C-${clienteId}`;
+            await db.query('UPDATE clientes_app SET codigo_cliente = ? WHERE id = ?', [codigo, clienteId]);
         }
 
         // 2. Procesar cada producto en el carrito
@@ -76,7 +99,7 @@ export const submitApartados = async (req: Request, res: Response): Promise<void
 
             // Verificamos stock real
             const [prodRes] = await db.query<any[]>(
-                'SELECT stock, costo FROM Productos WHERE id = ? AND tenant_id = ?',
+                'SELECT stock, costo FROM productos WHERE id = ? AND tenant_id = ?',
                 [productoId, tenant_id]
             );
 
@@ -93,7 +116,7 @@ export const submitApartados = async (req: Request, res: Response): Promise<void
 
             for (let i = 0; i < cantidad; i++) {
                 const [insertRes] = await db.query<any>(
-                    `INSERT INTO Ventas (tenant_id, productoId, clienteId, precioVenta, utilidad, fecha, pagado, estado) 
+                    `INSERT INTO ventas (tenant_id, productoId, clienteId, precioVenta, utilidad, fecha, pagado, estado) 
                      VALUES (?, ?, ?, ?, ?, NOW(), FALSE, 'apartado')`,
                     [tenant_id, productoId, clienteId, precioVenta, utilidad]
                 );

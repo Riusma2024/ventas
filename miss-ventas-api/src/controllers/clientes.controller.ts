@@ -12,7 +12,7 @@ export const getClientes = async (req: AuthRequest, res: Response): Promise<void
             return;
         }
 
-        const [rows] = await db.query<any[]>('SELECT * FROM Clientes_App WHERE tenant_id = ?', [tenant_id]);
+        const [rows] = await db.query<any[]>('SELECT * FROM clientes_app WHERE tenant_id = ?', [tenant_id]);
         res.json(rows);
     } catch (error) {
         console.error('Error al obtener clientes:', error);
@@ -32,12 +32,16 @@ export const createCliente = async (req: AuthRequest, res: Response): Promise<vo
         }
 
         const [result] = await db.query<any>(
-            `INSERT INTO Clientes_App (tenant_id, nombre, apodo, whatsapp, facebook, otro, deudaTotal) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [tenant_id, nombre, apodo || null, whatsapp || null, facebook || null, otro || null, deudaTotal || 0]
+            `INSERT INTO clientes_app (tenant_id, nombre, apodo, whatsapp, facebook, otro, deudaTotal, codigo_cliente) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [tenant_id, nombre, apodo || null, whatsapp || null, facebook || null, otro || null, deudaTotal || 0, 'PENDIENTE']
         );
 
-        res.status(201).json({ id: result.insertId, ...req.body, tenant_id });
+        const clientId = result.insertId;
+        const codigo = `C-${clientId}`;
+        await db.query('UPDATE clientes_app SET codigo_cliente = ? WHERE id = ?', [codigo, clientId]);
+
+        res.status(201).json({ id: clientId, codigo_cliente: codigo, ...req.body, tenant_id });
     } catch (error) {
         console.error('Error al crear cliente:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -52,7 +56,7 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
         const { nombre, apodo, whatsapp, facebook, otro, deudaTotal } = req.body;
 
         // Recuperar el cliente actual primero
-        const [currentClientRows] = await db.query<any[]>('SELECT * FROM Clientes_App WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
+        const [currentClientRows] = await db.query<any[]>('SELECT * FROM clientes_app WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
 
         if (currentClientRows.length === 0) {
             res.status(404).json({ error: 'Cliente no encontrado o no autorizado' });
@@ -70,7 +74,7 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
         const finalDeudaTotal = deudaTotal !== undefined ? deudaTotal : currentClient.deudaTotal;
 
         const [result] = await db.query<any>(
-            `UPDATE Clientes_App 
+            `UPDATE clientes_app 
              SET nombre = ?, apodo = ?, whatsapp = ?, facebook = ?, otro = ?, deudaTotal = ?
              WHERE id = ? AND tenant_id = ?`,
             [finalNombre, finalApodo || null, finalWhatsapp || null, finalFacebook || null, finalOtro || null, finalDeudaTotal, id, tenant_id]
@@ -95,7 +99,7 @@ export const deleteCliente = async (req: AuthRequest, res: Response): Promise<vo
         const tenant_id = req.user?.tenant_id;
 
         const [result] = await db.query<any>(
-            'DELETE FROM Clientes_App WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM clientes_app WHERE id = ? AND tenant_id = ?',
             [id, tenant_id]
         );
 

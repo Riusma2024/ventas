@@ -33,7 +33,7 @@ export const crearUsuario = async (req: AuthRequest, res: Response): Promise<voi
         }
 
         // Check si el email ya existe
-        const [existing] = await db.query<any[]>('SELECT id FROM Usuarios WHERE email = ?', [email]);
+        const [existing] = await db.query<any[]>('SELECT id FROM usuarios WHERE email = ?', [email]);
         if (existing.length > 0) {
             res.status(400).json({ error: 'El email ya está registrado' });
             return;
@@ -45,7 +45,7 @@ export const crearUsuario = async (req: AuthRequest, res: Response): Promise<voi
 
         // Insertar en Base de Datos
         const [result] = await db.query<any>(
-            'INSERT INTO Usuarios (nombre, email, password_hash, rol, tenant_id) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO usuarios (nombre, email, password_hash, rol, tenant_id) VALUES (?, ?, ?, ?, ?)',
             [nombre, email, passwordHash, rol, targetTenantId]
         );
 
@@ -74,7 +74,7 @@ export const getGestionadores = async (req: AuthRequest, res: Response): Promise
             return;
         }
 
-        const [rows] = await db.query<any[]>('SELECT id, nombre, email, creado_en FROM Usuarios WHERE rol = ?', ['gestionador']);
+        const [rows] = await db.query<any[]>('SELECT id, nombre, email, creado_en FROM usuarios WHERE rol = ?', ['gestionador']);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -98,7 +98,7 @@ export const updateGestionador = async (req: AuthRequest, res: Response): Promis
         }
 
         // Check if the user exists and is a gestionador
-        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM Usuarios WHERE id = ?', [id]);
+        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM usuarios WHERE id = ?', [id]);
         if (existingUser.length === 0) {
             res.status(404).json({ error: 'Gestionador no encontrado' });
             return;
@@ -109,7 +109,7 @@ export const updateGestionador = async (req: AuthRequest, res: Response): Promis
         }
 
         // Check if the new email already exists for a different user
-        const [existingEmail] = await db.query<any[]>('SELECT id FROM Usuarios WHERE email = ? AND id != ?', [email, id]);
+        const [existingEmail] = await db.query<any[]>('SELECT id FROM usuarios WHERE email = ? AND id != ?', [email, id]);
         if (existingEmail.length > 0) {
             res.status(400).json({ error: 'El email ya está registrado ppor otro usuario' });
             return;
@@ -148,7 +148,7 @@ export const deleteGestionador = async (req: AuthRequest, res: Response): Promis
         const { id } = req.params;
 
         // Check if the user exists and is a gestionador
-        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM Usuarios WHERE id = ?', [id]);
+        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM usuarios WHERE id = ?', [id]);
         if (existingUser.length === 0) {
             res.status(404).json({ error: 'Gestionador no encontrado' });
             return;
@@ -160,7 +160,7 @@ export const deleteGestionador = async (req: AuthRequest, res: Response): Promis
 
         // (Optional) Check if the gestionador has associated clients/sales before deleting. 
         // We'll delete directly for now or let DB handle foreign key constraints depending on the schema.
-        await db.query('DELETE FROM Usuarios WHERE id = ?', [id]);
+        await db.query('DELETE FROM usuarios WHERE id = ?', [id]);
 
         res.json({ mensaje: 'Gestionador eliminado exitosamente' });
 

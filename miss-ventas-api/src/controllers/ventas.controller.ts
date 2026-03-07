@@ -15,10 +15,10 @@ export const getVentas = async (req: AuthRequest, res: Response): Promise<void> 
         // Si es cliente, técnicamente deberíamos filtrar por su usuario_id vinculado a clienteId
         // Por ahora, asumimos que estamos en vista de Gestionador principalmente.
         const [rows] = await db.query<any[]>(
-            `SELECT v.*, p.nombre as productoNombre, c.nombre as clienteNombre 
-             FROM Ventas v 
-             JOIN Productos p ON v.productoId = p.id 
-             JOIN Clientes_App c ON v.clienteId = c.id 
+            `SELECT v.*, p.nombre as productoNombre, c.nombre as clienteNombre, c.whatsapp as clienteWhatsapp
+             FROM ventas v 
+             JOIN productos p ON v.productoId = p.id 
+             JOIN clientes_app c ON v.clienteId = c.id 
              WHERE v.tenant_id = ?
              ORDER BY v.fecha DESC`,
             [tenant_id]
@@ -43,7 +43,7 @@ export const createVenta = async (req: AuthRequest, res: Response): Promise<void
         }
 
         // Verificar stock actual
-        const [productoRes] = await db.query<any[]>('SELECT stock FROM Productos WHERE id = ? AND tenant_id = ?', [productoId, tenant_id]);
+        const [productoRes] = await db.query<any[]>('SELECT stock FROM productos WHERE id = ? AND tenant_id = ?', [productoId, tenant_id]);
 
         if (productoRes.length === 0) {
             res.status(404).json({ error: 'Producto no encontrado' });
@@ -63,7 +63,7 @@ export const createVenta = async (req: AuthRequest, res: Response): Promise<void
         // Insertar individualmente para mantener compatibilidad con BD
         for (let i = 0; i < cantidad; i++) {
             const [result] = await db.query<any>(
-                `INSERT INTO Ventas (tenant_id, productoId, clienteId, precioVenta, utilidad, fecha, pagado, estado) 
+                `INSERT INTO ventas (tenant_id, productoId, clienteId, precioVenta, utilidad, fecha, pagado, estado) 
                  VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)`,
                 [tenant_id, productoId, clienteId, precioVenta, utilidad, pagado || false, estadoInicial]
             );
@@ -72,7 +72,7 @@ export const createVenta = async (req: AuthRequest, res: Response): Promise<void
 
         // Si es "autorizado" directamente por el Gestionador, descontamos el stock.
         if (estadoInicial === 'autorizado') {
-            await db.query('UPDATE Productos SET stock = stock - ? WHERE id = ? AND tenant_id = ?', [cantidad, productoId, tenant_id]);
+            await db.query('UPDATE productos SET stock = stock - ? WHERE id = ? AND tenant_id = ?', [cantidad, productoId, tenant_id]);
         }
 
         res.status(201).json({
@@ -95,13 +95,18 @@ export const updateVentaEstado = async (req: AuthRequest, res: Response): Promis
         const tenant_id = req.user?.tenant_id;
         const { estado } = req.body; // 'apartado', 'autorizado', 'entregado', 'cancelado'
 
+        if (tenant_id === undefined) {
+            res.status(401).json({ error: 'Sesión desactualizada. Por favor, cierra sesión y vuelve a iniciar' });
+            return;
+        }
+
         if (!['apartado', 'autorizado', 'entregado', 'cancelado'].includes(estado)) {
             res.status(400).json({ error: 'Estado inválido' });
             return;
         }
 
         // Obtener estado actual
-        const [ventaRows] = await db.query<any[]>('SELECT estado, productoId FROM Ventas WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
+        const [ventaRows] = await db.query<any[]>('SELECT estado, productoId FROM ventas WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
 
         if (ventaRows.length === 0) {
             res.status(404).json({ error: 'Venta no encontrada' });
@@ -114,23 +119,24 @@ export const updateVentaEstado = async (req: AuthRequest, res: Response): Promis
         // Si pasa de algo a 'cancelado', quizá regresar stock (opcional pero lo omitimos por simplicidad aquí, dejamos a juicio futuro)
         if (ventaAnterior.estado === 'apartado' && ['autorizado', 'entregado'].includes(estado)) {
             // Verificar stock de nuevo
-            const [productoRes] = await db.query<any[]>('SELECT stock FROM Productos WHERE id = ? AND tenant_id = ?', [ventaAnterior.productoId, tenant_id]);
+            const [productoRes] = await db.query<any[]>('SELECT stock FROM productos WHERE id = ? AND tenant_id = ?', [ventaAnterior.productoId, tenant_id]);
             if (productoRes[0].stock <= 0) {
                 res.status(400).json({ error: 'No se puede autorizar, no hay stock disponible' });
                 return;
             }
             // Descontar
-            await db.query('UPDATE Productos SET stock = stock - 1 WHERE id = ? AND tenant_id = ?', [ventaAnterior.productoId, tenant_id]);
+            await db.query('UPDATE productos SET stock = stock - 1 WHERE id = ? AND tenant_id = ?', [ventaAnterior.productoId, tenant_id]);
         }
 
         const [result] = await db.query<any>(
-            'UPDATE Ventas SET estado = ? WHERE id = ? AND tenant_id = ?',
+            'UPDATE ventas SET estado = ? WHERE id = ? AND tenant_id = ?',
             [estado, id, tenant_id]
         );
 
         res.json({ mensaje: `Estado actualizado a ${estado}` });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error actualizando venta:', error);
+        try { require('fs').appendFileSync('error_log.txt', String(error?.message || error) + '\\n' + String(error?.stack || '') + '\\n'); } catch (e) { }
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -142,7 +148,7 @@ export const deleteVenta = async (req: AuthRequest, res: Response): Promise<void
         const tenant_id = req.user?.tenant_id;
 
         const [result] = await db.query<any>(
-            'DELETE FROM Ventas WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM ventas WHERE id = ? AND tenant_id = ?',
             [id, tenant_id]
         );
 

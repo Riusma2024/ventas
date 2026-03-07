@@ -14,7 +14,7 @@ export const loginUsuario = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        const [rows] = await db.query<any[]>('SELECT * FROM Usuarios WHERE email = ?', [email]);
+        const [rows] = await db.query<any[]>('SELECT * FROM usuarios WHERE email = ?', [email]);
 
         if (rows.length === 0) {
             res.status(401).json({ error: 'Credenciales inválidas' });

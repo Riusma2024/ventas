@@ -38,11 +38,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
 
-    // Check DB Connection
-    db.query('SELECT 1')
-        .then(() => console.log('✅ Connected to MySQL Database (miss_ventas_db)'))
-        .catch((err) => console.error('❌ Database connection failed:', err.message));
-});
+        // Check DB Connection
+        db.query('SELECT 1')
+            .then(() => console.log('✅ Connected to MySQL Database (miss_ventas_db)'))
+            .catch((err) => console.error('❌ Database connection failed:', err.message));
+    });
+}
+
+export default app;

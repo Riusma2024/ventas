@@ -339,7 +339,7 @@ const Dashboard: React.FC = () => {
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         const msg = encodeURIComponent(`Hola ${c.apodo || c.nombre}, tu código de cliente para el catálogo es: *${c.codigo_cliente}*. Úsalo para ver tu saldo y productos aquí: ${window.location.origin}/catalogo/${user?.id}`);
-                                                        window.open(`https://wa.me/${c.whatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                                                        window.open(`https://wa.me/${c.whatsapp!.replace(/\D/g, '')}?text=${msg}`, '_blank');
                                                     }}
                                                     className="p-3 bg-green-100 text-green-600 rounded-xl hover:bg-green-200 active:scale-90 transition-all"
                                                     title="Compartir ID por WhatsApp"

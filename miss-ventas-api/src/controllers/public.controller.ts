@@ -5,7 +5,7 @@ import { db } from '../config/db';
 export const getPublicCatalog = async (req: Request, res: Response): Promise<void> => {
     try {
         const { tenant_id } = req.params;
-        const { clienteId } = req.query;
+        const { clienteId, codigo } = req.query;
 
         if (!tenant_id) {
             res.status(400).json({ error: 'ID de catálogo (tenant) requerido' });
@@ -18,12 +18,18 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
             [tenant_id]
         );
 
-        // Si se provee clienteId, obtener su estado actual
+        // Si se provee clienteId o codigo, obtener su estado actual
         let clienteData = null;
         if (clienteId) {
             const [cRows] = await db.query<any[]>(
                 'SELECT id, nombre, whatsapp, deudaTotal, codigo_cliente FROM clientes_app WHERE id = ? AND tenant_id = ?',
                 [clienteId, tenant_id]
+            );
+            if (cRows.length > 0) clienteData = cRows[0];
+        } else if (codigo) {
+            const [cRows] = await db.query<any[]>(
+                'SELECT id, nombre, whatsapp, deudaTotal, codigo_cliente FROM clientes_app WHERE codigo_cliente = ? AND tenant_id = ?',
+                [String(codigo).toUpperCase(), tenant_id]
             );
             if (cRows.length > 0) clienteData = cRows[0];
         }

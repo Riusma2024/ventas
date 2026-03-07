@@ -34,6 +34,9 @@ export const PublicCatalog: React.FC = () => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [clienteAuth, setClienteAuth] = useState<any>(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const [loginCode, setLoginCode] = useState('');
+    const [loginError, setLoginError] = useState<string | null>(null);
 
     // Memoria de dispositivo
     const [rememberedUser, setRememberedUser] = useState<{ nombre: string, whatsapp: string } | null>(null);
@@ -75,6 +78,30 @@ export const PublicCatalog: React.FC = () => {
             }
         }
     }, [tenant_id]);
+
+    const handleLoginWithCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError(null);
+        try {
+            const res = await api.get(`/public/catalogo/${tenant_id}?codigo=${loginCode}`);
+            if (res.data.cliente) {
+                const c = res.data.cliente;
+                setClienteAuth(c);
+                localStorage.setItem('missventas_cliente_id', c.id.toString());
+                localStorage.setItem('missventas_cliente_nombre', c.nombre);
+                localStorage.setItem('missventas_cliente_whatsapp', c.whatsapp);
+                setClienteNombre(c.nombre);
+                setClienteWhatsapp(c.whatsapp);
+                setIsLoginModalOpen(false);
+                setLoginCode('');
+                setSuccessMessage(`¡Bienvenido de nuevo, ${c.nombre.split(' ')[0]}!`);
+            } else {
+                setLoginError('ID de cliente no encontrado');
+            }
+        } catch (err: any) {
+            setLoginError('Error al buscar el ID');
+        }
+    };
 
     const addToCart = (prod: Producto, quantityToAdd: number = 1) => {
         setCart(prev => {
@@ -218,17 +245,28 @@ export const PublicCatalog: React.FC = () => {
                         <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{negocio}</p>
                     </div>
 
-                    <button
-                        onClick={() => setIsCartOpen(true)}
-                        className="relative p-3 bg-primary-50 text-primary-600 rounded-2xl hover:bg-primary-100 transition-colors"
-                    >
-                        <ShoppingCart size={24} />
-                        {totalItems > 0 && (
-                            <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
-                                {totalItems}
-                            </span>
+                    <div className="flex items-center gap-2">
+                        {!clienteAuth && (
+                            <button
+                                onClick={() => setIsLoginModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors"
+                            >
+                                <User size={16} />
+                                Tengo ID
+                            </button>
                         )}
-                    </button>
+                        <button
+                            onClick={() => setIsCartOpen(true)}
+                            className="relative p-3 bg-primary-50 text-primary-600 rounded-2xl hover:bg-primary-100 transition-colors"
+                        >
+                            <ShoppingCart size={24} />
+                            {totalItems > 0 && (
+                                <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                    {totalItems}
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -370,7 +408,8 @@ export const PublicCatalog: React.FC = () => {
 
             {isProfileModalOpen && clienteAuth && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center">
+                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center relative overflow-hidden">
+                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"><X size={20} /></button>
                         <div className="w-20 h-20 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 font-black text-3xl">{clienteAuth.nombre[0].toUpperCase()}</div>
                         <h2 className="text-2xl font-black text-slate-900 mb-1">{clienteAuth.nombre}</h2>
                         <span className="inline-block bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">ID: {clienteAuth.codigo_cliente}</span>
@@ -378,8 +417,60 @@ export const PublicCatalog: React.FC = () => {
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tu Saldo Pendiente</p>
                             <p className={`text-2xl font-black tracking-tighter ${Number(clienteAuth.deudaTotal) > 0 ? 'text-red-500' : 'text-green-500'}`}>${Number(clienteAuth.deudaTotal).toFixed(2)}</p>
                         </div>
-                        <button onClick={() => setIsProfileModalOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-wider text-sm">Cerrar</button>
+                        <div className="space-y-3">
+                            <button onClick={() => setIsProfileModalOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all">Cerrar</button>
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('missventas_cliente_id');
+                                    localStorage.removeItem('missventas_cliente_nombre');
+                                    localStorage.removeItem('missventas_cliente_whatsapp');
+                                    setClienteAuth(null);
+                                    setRememberedUser(null);
+                                    setClienteNombre('');
+                                    setClienteWhatsapp('');
+                                    setIsProfileModalOpen(false);
+                                }}
+                                className="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase tracking-wider text-[10px] active:scale-95 transition-all"
+                            >
+                                Cerrar Sesión / Soy otra persona
+                            </button>
+                        </div>
                     </div>
+                </div>
+            )}
+
+            {isLoginModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+                    <form onSubmit={handleLoginWithCode} className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center relative animate-fade-in">
+                        <button type="button" onClick={() => setIsLoginModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                        <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <User size={32} />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">Accede a tu cuenta</h2>
+                        <p className="text-slate-500 text-sm mb-8">Ingresa tu código de cliente para ver tus movimientos y deudas.</p>
+
+                        <div className="space-y-4 text-left">
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Código de Cliente</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej: C-6"
+                                    value={loginCode}
+                                    onChange={(e) => setLoginCode(e.target.value.toUpperCase())}
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mt-1 text-center font-black text-lg focus:border-primary-500 outline-none transition-all"
+                                />
+                            </div>
+
+                            {loginError && (
+                                <p className="text-red-500 text-[10px] font-bold text-center italic">{loginError}</p>
+                            )}
+
+                            <button type="submit" className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-primary-500/20 active:scale-95 transition-all">
+                                Consultar
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
         </div>

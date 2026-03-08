@@ -7,7 +7,7 @@ import { AddProductForm } from '../components/AddProductForm';
 import { AddClientForm } from '../components/AddClientForm';
 import { SellProductForm } from '../components/SellProductForm';
 import { TandaManager } from '../components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2, ShoppingCart } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, CheckCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2, ShoppingCart } from 'lucide-react';
 import { ReportsView } from '../components/ReportsView';
 import { PendingRequestsManager } from '../components/PendingRequestsManager';
 import { CartModal, type CartItem } from '../components/CartModal';
@@ -26,6 +26,19 @@ const Dashboard: React.FC = () => {
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [selectedClientAccount, setSelectedClientAccount] = useState<Cliente | null>(null);
     const [selectedSale, setSelectedSale] = useState<Venta | null>(null);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Cargar clientes vistos de localStorage
+    const [vistosLocales, setVistosLocales] = useState<string[]>(() => {
+        const saved = localStorage.getItem('clientes_vistos');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
     const [isCriticalStockOpen, setIsCriticalStockOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<Cliente | null>(null);
@@ -44,7 +57,7 @@ const Dashboard: React.FC = () => {
     const copyCatalogLink = () => {
         const url = `${window.location.origin}/catalogo/${user?.id}`;
         navigator.clipboard.writeText(url);
-        alert('¡Enlace del catálogo copiado al portapapeles!');
+        showNotification('¡Enlace del catálogo copiado al portapapeles!');
     };
 
     const loadData = async () => {
@@ -71,6 +84,7 @@ const Dashboard: React.FC = () => {
             setVentasHoy(hoyVentas);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+            showNotification('Error al cargar datos del dashboard.', 'error');
         } finally {
             setLoadingData(false);
         }
@@ -85,7 +99,7 @@ const Dashboard: React.FC = () => {
     const utilidadHoy = ventasAutorizadasHoy.reduce((acc, v) => acc + Number(v.utilidad), 0);
 
     const pendingRequestsCount = (ventasHoy || []).filter(v => v.estado === 'apartado').length;
-    const newClientsCount = clientes.filter(c => c.visto === false || c.visto === undefined).length;
+    const newClientsCount = clientes.filter(c => !c.visto && !vistosLocales.includes(String(c.id))).length;
 
     return (
         <Layout
@@ -262,9 +276,14 @@ const Dashboard: React.FC = () => {
                         <div className="flex gap-2">
                             <button
                                 onClick={async () => {
-                                    await syncAllDebts();
-                                    loadData();
-                                    alert('Deudas sincronizadas correctamente');
+                                    try {
+                                        await syncAllDebts();
+                                        loadData();
+                                        showNotification('Deudas sincronizadas correctamente');
+                                    } catch (error) {
+                                        console.error('Error syncing debts:', error);
+                                        showNotification('Error al sincronizar deudas.', 'error');
+                                    }
                                 }}
                                 title="Sincronizar Deudas"
                                 className="bg-slate-100 p-3 rounded-2xl text-slate-500 hover:bg-slate-200 transition-colors"
@@ -306,8 +325,8 @@ const Dashboard: React.FC = () => {
                                     return c.nombre.toLowerCase().includes(query) || (c.apodo && c.apodo.toLowerCase().includes(query));
                                 })
                                 .sort((a, b) => {
-                                    const aVisto = a.visto ?? false;
-                                    const bVisto = b.visto ?? false;
+                                    const aVisto = (a.visto || vistosLocales.includes(String(a.id))) ? true : false;
+                                    const bVisto = (b.visto || vistosLocales.includes(String(b.id))) ? true : false;
                                     if (aVisto === bVisto) return 0;
                                     return aVisto ? 1 : -1;
                                 })
@@ -319,12 +338,18 @@ const Dashboard: React.FC = () => {
                                         <div
                                             onClick={async () => {
                                                 setSelectedClientAccount(c);
-                                                if (!c.visto) {
+                                                const idStr = String(c.id);
+                                                if (!c.visto && !vistosLocales.includes(idStr)) {
+                                                    // Guardar localmente
+                                                    const nuevosVistos = [...vistosLocales, idStr];
+                                                    setVistosLocales(nuevosVistos);
+                                                    localStorage.setItem('clientes_vistos', JSON.stringify(nuevosVistos));
+
+                                                    // Intentar en servidor (opcional)
                                                     try {
                                                         await api.put(`/clientes/${c.id}`, { visto: true });
-                                                        loadData();
                                                     } catch (e) {
-                                                        console.warn('No se pudo marcar como visto:', e);
+                                                        console.log('Usando respaldo local para visto');
                                                     }
                                                 }
                                             }}
@@ -344,18 +369,18 @@ const Dashboard: React.FC = () => {
                                                         {c.nombre ? c.nombre[0].toUpperCase() : '?'}
                                                     </div>
                                                 )}
-                                                {(!c.visto) && (
-                                                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                                {(!c.visto && !vistosLocales.includes(String(c.id))) && (
+                                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
+                                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="font-black text-slate-900 text-base tracking-tighter truncate">{c.apodo || c.nombre}</h4>
-                                                    {(!c.visto) && (
-                                                        <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest animate-pulse">Nuevo</span>
+                                                    <h4 className="font-black text-slate-900 text-sm tracking-tighter truncate">{c.apodo || c.nombre}</h4>
+                                                    {(!c.visto && !vistosLocales.includes(String(c.id))) && (
+                                                        <span className="bg-red-500 text-white text-[7px] font-black px-1 py-0.5 rounded uppercase tracking-tighter animate-pulse">Nuevo</span>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-col">
@@ -443,7 +468,7 @@ const Dashboard: React.FC = () => {
                         setIsCartOpen(false);
                         setCartClienteId('');
                         loadData();
-                        alert('¡Ventas registradas y deuda cargada exitosamente!');
+                        showNotification('¡Ventas registradas y deuda cargada exitosamente!');
                     }}
                 />
             )}
@@ -474,6 +499,21 @@ const Dashboard: React.FC = () => {
                         <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white">
                             <X size={24} />
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Toast */}
+            {toast && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
+                    <div className={`flex items-center gap-3 px-6 py-4 rounded-3xl shadow-2xl backdrop-blur-xl border ${toast.type === 'success'
+                            ? 'bg-green-500/90 border-green-400 text-white'
+                            : 'bg-red-500/90 border-red-400 text-white'
+                        }`}>
+                        <div className="bg-white/20 p-1 rounded-full">
+                            {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                        </div>
+                        <p className="font-black text-sm tracking-tight whitespace-nowrap">{toast.message}</p>
                     </div>
                 </div>
             )}

@@ -17,6 +17,7 @@ import { ClientAccountStatement } from '../components/ClientAccountStatement';
 import { SaleDetail } from '../components/SaleDetail';
 import { CriticalStockModal } from '../components/CriticalStockModal';
 import { type Cliente, type Venta } from '../db/db';
+import { ShareMenu } from '../components/ShareMenu';
 
 const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('home');
@@ -54,10 +55,26 @@ const Dashboard: React.FC = () => {
     const [ventasHoy, setVentasHoy] = useState<Venta[]>([]);
     const [loadingData, setLoadingData] = useState(true);
 
-    const copyCatalogLink = () => {
+    const [shareConfig, setShareConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        text: string;
+        url: string;
+    }>({
+        isOpen: false,
+        title: '',
+        text: '',
+        url: ''
+    });
+
+    const openShareCatalog = () => {
         const url = `${window.location.origin}/catalogo/${user?.id}`;
-        navigator.clipboard.writeText(url);
-        showNotification('¡Enlace del catálogo copiado al portapapeles!');
+        setShareConfig({
+            isOpen: true,
+            title: 'Mi Catálogo de Ventas',
+            text: '¡Hola! Te comparto mi catálogo de productos para que los veas en línea:',
+            url: url
+        });
     };
 
     const loadData = async () => {
@@ -195,7 +212,7 @@ const Dashboard: React.FC = () => {
                         <h2 className="text-2xl font-bold text-slate-800">Inventario</h2>
                         <div className="flex gap-2">
                             <button
-                                onClick={copyCatalogLink}
+                                onClick={openShareCatalog}
                                 className="bg-slate-100 p-3 rounded-2xl text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-200 transition-colors"
                                 title="Copiar enlace del catálogo"
                             >
@@ -417,11 +434,17 @@ const Dashboard: React.FC = () => {
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            const msg = encodeURIComponent(`Hola ${c.apodo || c.nombre}, tu código de cliente para el catálogo es: *${c.codigo_cliente}*. Úsalo para ver tu saldo y productos aquí: ${window.location.origin}/catalogo/${user?.id}`);
-                                                            window.open(`https://wa.me/${c.whatsapp!.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                                                            const text = `Hola ${c.apodo || c.nombre}, tu código de cliente es: *${c.codigo_cliente}*. Úsalo para ver tu saldo aquí:`;
+                                                            const url = `${window.location.origin}/catalogo/${user?.id}`;
+                                                            setShareConfig({
+                                                                isOpen: true,
+                                                                title: `ID: ${c.apodo || c.nombre}`,
+                                                                text,
+                                                                url
+                                                            });
                                                         }}
                                                         className="p-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 active:scale-90 transition-all border border-green-100 shadow-sm"
-                                                        title="Compartir ID por WhatsApp"
+                                                        title="Compartir Acceso"
                                                     >
                                                         <Share2 size={14} strokeWidth={3} />
                                                     </button>
@@ -497,6 +520,15 @@ const Dashboard: React.FC = () => {
                     }}
                 />
             )}
+
+            <ShareMenu
+                isOpen={shareConfig.isOpen}
+                onClose={() => setShareConfig({ ...shareConfig, isOpen: false })}
+                title={shareConfig.title}
+                text={shareConfig.text}
+                url={shareConfig.url}
+                onCopySuccess={() => showNotification('¡Enlace copiado al portapapeles!')}
+            />
 
             {/* Image Zoom Modal */}
             {zoomedImage && (

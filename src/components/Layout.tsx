@@ -7,9 +7,10 @@ interface LayoutProps {
     children: React.ReactNode;
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    badges?: Record<string, number>;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, badges }) => {
     const { logout } = useAuth();
 
     const tabs = [
@@ -73,6 +74,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                                     }`}
                             >
                                 <Icon size={24} />
+                                {badges && (badges[tab.id] || 0) > 0 && !isActive && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-slate-900 shadow-lg animate-pulse">
+                                        {badges[tab.id] > 9 ? '+9' : badges[tab.id]}
+                                    </span>
+                                )}
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeTab"

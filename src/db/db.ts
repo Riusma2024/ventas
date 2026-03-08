@@ -30,6 +30,8 @@ export interface Cliente {
     otro?: string;
     deudaTotal: number;
     codigo_cliente?: string;
+    foto?: string;
+    visto?: boolean;
 }
 
 export interface Abono {

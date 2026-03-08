@@ -84,8 +84,18 @@ const Dashboard: React.FC = () => {
     const totalVendidoHoy = ventasAutorizadasHoy.reduce((acc, v) => acc + Number(v.precioVenta), 0);
     const utilidadHoy = ventasAutorizadasHoy.reduce((acc, v) => acc + Number(v.utilidad), 0);
 
+    const pendingRequestsCount = (ventasHoy || []).filter(v => v.estado === 'apartado').length;
+    const newClientsCount = clientes.filter(c => c.visto === false || c.visto === undefined).length;
+
     return (
-        <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        <Layout
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            badges={{
+                requests: pendingRequestsCount,
+                crm: newClientsCount
+            }}
+        >
             {activeTab === 'home' && (
                 <div className="space-y-6">
                     {/* Quick Stats */}
@@ -295,67 +305,103 @@ const Dashboard: React.FC = () => {
                                     const query = searchQuery.toLowerCase();
                                     return c.nombre.toLowerCase().includes(query) || (c.apodo && c.apodo.toLowerCase().includes(query));
                                 })
+                                .sort((a, b) => {
+                                    const aVisto = a.visto ?? false;
+                                    const bVisto = b.visto ?? false;
+                                    if (aVisto === bVisto) return 0;
+                                    return aVisto ? 1 : -1;
+                                })
                                 .map(c => (
                                     <div
                                         key={c.id}
-                                        className="card-premium flex items-center gap-4 hover:translate-y-[-2px] transition-all group"
+                                        className="card-premium flex items-center justify-between gap-4 group relative overflow-hidden"
                                     >
                                         <div
-                                            onClick={() => setSelectedClientAccount(c)}
-                                            className="flex items-center gap-4 flex-1 cursor-pointer"
+                                            onClick={async () => {
+                                                setSelectedClientAccount(c);
+                                                if (!c.visto) {
+                                                    try {
+                                                        await api.put(`/clientes/${c.id}`, { visto: true });
+                                                        loadData();
+                                                    } catch (e) {
+                                                        console.warn('No se pudo marcar como visto:', e);
+                                                    }
+                                                }
+                                            }}
+                                            className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer"
                                         >
-                                            <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
-                                                {c.nombre ? c.nombre[0].toUpperCase() : '?'}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-black text-slate-900 text-base tracking-tighter truncate">{c.apodo || c.nombre}</h4>
-                                                <div className="flex items-center gap-1.5 overflow-hidden">
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{c.nombre}</p>
-                                                    {c.whatsapp && (
-                                                        <>
-                                                            <span className="text-slate-300 text-[10px]">•</span>
-                                                            <p className="text-[10px] text-green-600 font-black tracking-tight">{c.whatsapp}</p>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                {c.codigo_cliente && (
-                                                    <p className="text-[9px] bg-slate-100 text-slate-500 font-black px-1.5 py-0.5 rounded mt-1 w-max tracking-tighter">ID: {c.codigo_cliente}</p>
+                                            <div className="relative flex-shrink-0">
+                                                {c.foto && c.foto.length > 2 ? (
+                                                    <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-primary-100 shadow-sm">
+                                                        {c.foto.includes('h') ? (
+                                                            <img src={c.foto} className="w-full h-full object-cover" alt={c.nombre} />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-slate-900 flex items-center justify-center text-2xl">{c.foto}</div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-accent to-primary-500 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/20">
+                                                        {c.nombre ? c.nombre[0].toUpperCase() : '?'}
+                                                    </div>
+                                                )}
+                                                {(!c.visto) && (
+                                                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
+                                                    </span>
                                                 )}
                                             </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-black text-slate-900 text-base tracking-tighter truncate">{c.apodo || c.nombre}</h4>
+                                                    {(!c.visto) && (
+                                                        <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest animate-pulse">Nuevo</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{c.nombre}</p>
+                                                    {c.whatsapp && (
+                                                        <p className="text-[10px] text-green-600 font-black tracking-tight">{c.whatsapp}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-end gap-2 pr-1">
                                             <div className="text-right">
-                                                <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Deuda</p>
+                                                <p className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">Deuda</p>
                                                 {Number(c.deudaTotal) <= 0 ? (
                                                     <span className="inline-flex bg-green-100 text-green-600 text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider">
                                                         Saldado
                                                     </span>
                                                 ) : (
-                                                    <p className="font-black text-red-500 text-lg tracking-tighter">${Number(c.deudaTotal).toFixed(2)}</p>
+                                                    <p className="font-black text-red-500 text-lg tracking-tighter leading-none">${Number(c.deudaTotal).toFixed(2)}</p>
                                                 )}
                                             </div>
-                                        </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {c.whatsapp && c.codigo_cliente && (
+                                            <div className="flex gap-2">
+                                                {c.whatsapp && c.codigo_cliente && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const msg = encodeURIComponent(`Hola ${c.apodo || c.nombre}, tu código de cliente para el catálogo es: *${c.codigo_cliente}*. Úsalo para ver tu saldo y productos aquí: ${window.location.origin}/catalogo/${user?.id}`);
+                                                            window.open(`https://wa.me/${c.whatsapp!.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                                                        }}
+                                                        className="p-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 active:scale-90 transition-all border border-green-100 shadow-sm"
+                                                        title="Compartir ID por WhatsApp"
+                                                    >
+                                                        <Share2 size={14} strokeWidth={3} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        const msg = encodeURIComponent(`Hola ${c.apodo || c.nombre}, tu código de cliente para el catálogo es: *${c.codigo_cliente}*. Úsalo para ver tu saldo y productos aquí: ${window.location.origin}/catalogo/${user?.id}`);
-                                                        window.open(`https://wa.me/${c.whatsapp!.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                                                        setEditingClient(c);
                                                     }}
-                                                    className="p-3 bg-green-100 text-green-600 rounded-xl hover:bg-green-200 active:scale-90 transition-all"
-                                                    title="Compartir ID por WhatsApp"
+                                                    className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 active:scale-90 transition-all border border-slate-100 shadow-sm"
                                                 >
-                                                    <Share2 size={16} strokeWidth={3} />
+                                                    <Edit size={14} strokeWidth={3} />
                                                 </button>
-                                            )}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingClient(c);
-                                                }}
-                                                className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 active:scale-90 transition-all"
-                                            >
-                                                <Edit size={16} strokeWidth={3} />
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

@@ -24,7 +24,7 @@ export const getClientes = async (req: AuthRequest, res: Response): Promise<void
 export const createCliente = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const tenant_id = req.user?.tenant_id;
-        const { nombre, apodo, whatsapp, facebook, otro, deudaTotal } = req.body;
+        const { nombre, apodo, whatsapp, facebook, otro, deudaTotal, foto } = req.body;
 
         if (!nombre) {
             res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -32,9 +32,9 @@ export const createCliente = async (req: AuthRequest, res: Response): Promise<vo
         }
 
         const [result] = await db.query<any>(
-            `INSERT INTO clientes_app (tenant_id, nombre, apodo, whatsapp, facebook, otro, deudaTotal, codigo_cliente) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [tenant_id, nombre, apodo || null, whatsapp || null, facebook || null, otro || null, deudaTotal || 0, 'PENDIENTE']
+            `INSERT INTO clientes_app (tenant_id, nombre, apodo, whatsapp, facebook, otro, deudaTotal, codigo_cliente, foto, visto) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)`,
+            [tenant_id, nombre, apodo || null, whatsapp || null, facebook || null, otro || null, deudaTotal || 0, 'PENDIENTE', foto || null]
         );
 
         const clientId = result.insertId;
@@ -53,7 +53,7 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
     try {
         const { id } = req.params;
         const tenant_id = req.user?.tenant_id;
-        const { nombre, apodo, whatsapp, facebook, otro, deudaTotal } = req.body;
+        const { nombre, apodo, whatsapp, facebook, otro, deudaTotal, foto, visto } = req.body;
 
         // Recuperar el cliente actual primero
         const [currentClientRows] = await db.query<any[]>('SELECT * FROM clientes_app WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
@@ -72,12 +72,14 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
         const finalFacebook = facebook !== undefined ? facebook : currentClient.facebook;
         const finalOtro = otro !== undefined ? otro : currentClient.otro;
         const finalDeudaTotal = deudaTotal !== undefined ? deudaTotal : currentClient.deudaTotal;
+        const finalFoto = foto !== undefined ? foto : currentClient.foto;
+        const finalVisto = visto !== undefined ? visto : currentClient.visto;
 
         const [result] = await db.query<any>(
             `UPDATE clientes_app 
-             SET nombre = ?, apodo = ?, whatsapp = ?, facebook = ?, otro = ?, deudaTotal = ?
+             SET nombre = ?, apodo = ?, whatsapp = ?, facebook = ?, otro = ?, deudaTotal = ?, foto = ?, visto = ?
              WHERE id = ? AND tenant_id = ?`,
-            [finalNombre, finalApodo || null, finalWhatsapp || null, finalFacebook || null, finalOtro || null, finalDeudaTotal, id, tenant_id]
+            [finalNombre, finalApodo || null, finalWhatsapp || null, finalFacebook || null, finalOtro || null, finalDeudaTotal, finalFoto || null, finalVisto, id, tenant_id]
         );
 
         if (result.affectedRows === 0) {

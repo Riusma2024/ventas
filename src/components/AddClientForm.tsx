@@ -15,8 +15,12 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
     const [whatsapp, setWhatsapp] = useState(cliente?.whatsapp || '');
     const [facebook, setFacebook] = useState(cliente?.facebook || '');
     const [otro, setOtro] = useState(cliente?.otro || '');
+    const [foto, setFoto] = useState(cliente?.foto || '');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+    const emojis = ['👩', '👨', '👵', '👴', '👧', '👦', '✨', '💖', '👑', '👠', '👜', '💄', '🌹', '🦋', '⭐', '💎'];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,6 +33,7 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
                 whatsapp,
                 facebook,
                 otro,
+                foto,
                 deudaTotal: cliente?.deudaTotal || 0
             };
 
@@ -65,10 +70,77 @@ export const AddClientForm: React.FC<AddClientFormProps> = ({ cliente, onClose, 
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="flex justify-center mb-4">
-                        <div className="w-24 h-24 bg-gradient-to-br from-accent/10 to-primary-500/10 rounded-[2rem] flex items-center justify-center text-accent">
-                            <UserPlus size={40} strokeWidth={2.5} />
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative group">
+                            <div
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-24 h-24 bg-gradient-to-br from-accent/10 to-primary-500/10 rounded-[2rem] flex items-center justify-center text-accent border-2 border-dashed border-accent/20 cursor-pointer hover:border-accent/50 transition-all overflow-hidden shadow-inner"
+                            >
+                                {foto ? (
+                                    foto.length > 2 ? (
+                                        <img src={foto} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-5xl">{foto}</span>
+                                    )
+                                ) : (
+                                    <UserPlus size={40} strokeWidth={2.5} />
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="absolute -bottom-1 -right-1 bg-white p-2 rounded-xl shadow-lg border border-slate-100 text-slate-400 hover:text-primary-500 transition-colors"
+                            >
+                                <Save size={14} />
+                            </button>
                         </div>
+
+                        {showEmojiPicker && (
+                            <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 grid grid-cols-8 gap-2 animate-in fade-in zoom-in duration-200">
+                                {emojis.map(e => (
+                                    <button
+                                        key={e}
+                                        type="button"
+                                        onClick={() => { setFoto(e); setShowEmojiPicker(false); }}
+                                        className="text-2xl hover:scale-125 transition-transform"
+                                    >
+                                        {e}
+                                    </button>
+                                ))}
+                                <div className="col-span-8 pt-2 border-t border-slate-200 mt-2 space-y-2">
+                                    <input
+                                        type="text"
+                                        placeholder="O pega link de foto aquí..."
+                                        className="w-full text-[10px] p-2 rounded-lg border border-slate-200"
+                                        value={foto.length > 30 ? 'Cargada desde dispositivo' : foto}
+                                        onChange={(e) => setFoto(e.target.value)}
+                                    />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        id="fileInput"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setFoto(reader.result as string);
+                                                    setShowEmojiPicker(false);
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="fileInput"
+                                        className="w-full flex items-center justify-center gap-2 p-2 bg-slate-100 text-slate-500 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-200 transition-colors border border-slate-200"
+                                    >
+                                        📷 USAR CÁMARA / GALERÍA
+                                    </label>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {error && (

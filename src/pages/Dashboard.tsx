@@ -112,27 +112,27 @@ const Dashboard: React.FC = () => {
         >
             {activeTab === 'home' && (
                 <div className="space-y-6">
-                    {/* Quick Stats Stacked */}
-                    <section className="flex flex-col gap-4">
-                        <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden group flex items-center gap-6">
+                    {/* Quick Stats Grid */}
+                    <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group flex items-center gap-6">
                             <div className="absolute -right-4 -top-4 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl transition-all"></div>
-                            <div className="bg-white/5 p-4 rounded-[1.5rem] border border-white/10 z-10">
-                                <TrendingUp size={32} className="text-primary-400" />
+                            <div className="bg-white/5 p-5 rounded-[1.5rem] border border-white/10 z-10 transition-transform group-hover:scale-110">
+                                <TrendingUp size={40} className="text-primary-400" />
                             </div>
                             <div className="z-10">
-                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Ventas Hoy</p>
-                                <h3 className="text-4xl font-black tracking-tighter leading-none">${totalVendidoHoy.toFixed(2)}</h3>
+                                <p className="text-xs text-slate-400 font-black uppercase tracking-widest mb-1">Ventas Hoy</p>
+                                <h3 className="text-4xl md:text-5xl font-black tracking-tighter leading-none">${totalVendidoHoy.toFixed(2)}</h3>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-premium relative overflow-hidden group flex items-center gap-6">
+                        <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-premium relative overflow-hidden group flex items-center gap-6">
                             <div className="absolute -right-4 -top-4 w-32 h-32 bg-accent/5 rounded-full blur-3xl transition-all"></div>
-                            <div className="bg-accent/5 p-4 rounded-[1.5rem] border border-accent/5 z-10">
-                                <Wallet size={32} className="text-accent" />
+                            <div className="bg-accent/5 p-5 rounded-[1.5rem] border border-accent/5 z-10 transition-transform group-hover:scale-110">
+                                <Wallet size={40} className="text-accent" />
                             </div>
                             <div className="z-10">
-                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Utilidad Hoy</p>
-                                <h3 className="text-4xl font-black text-slate-900 tracking-tighter leading-none">${utilidadHoy.toFixed(2)}</h3>
+                                <p className="text-xs text-slate-400 font-black uppercase tracking-widest mb-1">Utilidad Hoy</p>
+                                <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none">${utilidadHoy.toFixed(2)}</h3>
                             </div>
                         </div>
                     </section>
@@ -229,7 +229,7 @@ const Dashboard: React.FC = () => {
                             <button onClick={() => setIsAddProductOpen(true)} className="text-primary-500 font-bold mt-2">Agregar Producto</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4 pb-32">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pb-32">
                             {productos.map((prod) => (
                                 <div key={prod.id} className="card-premium flex flex-col gap-3 group animate-fade-in">
                                     <div
@@ -327,7 +327,7 @@ const Dashboard: React.FC = () => {
                             <button onClick={() => setIsAddClientOpen(true)} className="text-accent font-bold mt-2">Agregar Cliente</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-4 pb-32">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-32">
                             {clientes
                                 .filter(c => {
                                     const query = searchQuery.toLowerCase();

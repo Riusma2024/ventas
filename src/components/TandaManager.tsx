@@ -45,23 +45,23 @@ export const TandaManager: React.FC = () => {
                     <button onClick={() => setIsCreating(true)} className="text-primary-500 font-bold mt-2">Crear Nueva Tanda</button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tandas.map(t => (
                         <button
                             key={t.id}
                             onClick={() => setSelectedTandaId(t.id!)}
-                            className={`p-5 rounded-[2rem] border transition-all text-left ${selectedTandaId === t.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-800 border-slate-100'
+                            className={`p-6 rounded-[2.5rem] border-2 transition-all text-left group relative overflow-hidden ${selectedTandaId === t.id ? 'bg-slate-900 border-slate-900 shadow-2xl' : 'bg-white text-slate-800 border-slate-100 hover:border-primary-200'
                                 }`}
                         >
-                            <div className="flex justify-between items-start">
+                            <div className="flex justify-between items-start z-10 relative">
                                 <div>
-                                    <h4 className="font-bold text-lg">{t.nombre}</h4>
-                                    <p className={`text-xs ${selectedTandaId === t.id ? 'text-slate-400' : 'text-slate-500'}`}>
+                                    <h4 className={`font-black text-xl tracking-tighter ${selectedTandaId === t.id ? 'text-white' : 'text-slate-900'}`}>{t.nombre}</h4>
+                                    <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${selectedTandaId === t.id ? 'text-primary-400' : 'text-slate-400'}`}>
                                         ${t.montoPorNumero} • {t.periodicidad}
                                     </p>
                                 </div>
-                                <div className={`p-2 rounded-xl ${selectedTandaId === t.id ? 'bg-primary-500' : 'bg-primary-50'}`}>
-                                    <Calendar size={18} className={selectedTandaId === t.id ? 'text-white' : 'text-primary-500'} />
+                                <div className={`p-4 rounded-3xl z-10 transition-transform group-hover:scale-110 ${selectedTandaId === t.id ? 'bg-primary-500 shadow-lg shadow-primary-500/40' : 'bg-primary-50'}`}>
+                                    <Calendar size={20} className={selectedTandaId === t.id ? 'text-white' : 'text-primary-500'} />
                                 </div>
                             </div>
                         </button>
@@ -77,19 +77,19 @@ export const TandaManager: React.FC = () => {
                     className="space-y-4 pb-20"
                 >
                     <h3 className="text-lg font-bold text-slate-800 px-2 mt-8">Seguimiento de Pagos</h3>
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {pagosTanda?.map((p: any) => (
-                            <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${p.esBeneficiario ? 'bg-amber-100 text-amber-600' : (p.pagado ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400')
+                            <div key={p.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${p.esBeneficiario ? 'bg-amber-100 text-amber-600' : (p.pagado ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400')
                                     }`}>
-                                    {p.esBeneficiario ? <Trophy size={18} /> : (p.pagado ? <CheckCircle2 size={18} /> : <Circle size={18} />)}
+                                    {p.esBeneficiario ? <Trophy size={20} /> : (p.pagado ? <CheckCircle2 size={20} /> : <Circle size={20} />)}
                                 </div>
-                                <div className="flex-1">
-                                    <h5 className="font-bold text-slate-800 text-sm">{p.participanteNombre}</h5>
-                                    <p className="text-[10px] text-slate-400 font-bold">SEMANA {p.numeroSemana}</p>
+                                <div className="flex-1 min-w-0">
+                                    <h5 className="font-black text-slate-900 text-sm truncate uppercase tracking-tighter">{p.participanteNombre}</h5>
+                                    <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">SEMANA {p.numeroSemana}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className={`font-bold ${p.esBeneficiario ? 'text-amber-600' : 'text-slate-800'}`}>
+                                    <p className={`font-black text-lg tracking-tighter ${p.esBeneficiario ? 'text-amber-600' : 'text-slate-900'}`}>
                                         {p.esBeneficiario ? 'EXENTO' : `$${p.monto}`}
                                     </p>
                                     {(!p.pagado && !p.esBeneficiario) && (
@@ -98,9 +98,9 @@ export const TandaManager: React.FC = () => {
                                                 await api.put(`/tandas/${tandaActiva.id}/participantes/${p.id}`, { pagado: true });
                                                 loadTandas();
                                             }}
-                                            className="text-[9px] font-bold text-primary-500 uppercase tracking-tighter"
+                                            className="text-[10px] font-black text-primary-500 uppercase tracking-tighter hover:underline"
                                         >
-                                            Marcar Pago
+                                            Pagar
                                         </button>
                                     )}
                                 </div>
@@ -164,8 +164,8 @@ const CreateTandaForm: React.FC<CreateTandaFormProps> = ({ onClose, onSuccess })
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end justify-center">
-            <div className="bg-white w-full max-w-md rounded-t-[3rem] p-8 space-y-6 animate-slide-up h-[90vh] overflow-y-auto no-scrollbar">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
+            <div className="bg-white w-full max-w-xl rounded-[3rem] p-8 space-y-6 animate-slide-up h-[90vh] md:h-auto md:max-h-[85vh] overflow-y-auto no-scrollbar relative shadow-3xl">
                 <div className="flex justify-between items-center">
                     <h3 className="text-xl font-bold text-slate-800">Nueva Tanda</h3>
                     <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-400">

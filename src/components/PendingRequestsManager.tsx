@@ -67,26 +67,26 @@ export const PendingRequestsManager: React.FC = () => {
                     <p className="text-slate-400 font-medium">No tienes apartados pendientes por revisar.</p>
                 </div>
             ) : (
-                <div className="space-y-4 pb-32">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-32">
                     {requests.map(req => (
-                        <div key={req.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-4">
+                        <div key={req.id} className="bg-white p-6 rounded-3xl border-2 border-slate-50 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all flex flex-col justify-between group">
+                            <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-500 bg-amber-50 px-2 py-1 rounded-lg mb-2">
-                                        <Clock size={12} />
+                                    <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-amber-500 bg-amber-50 px-2.5 py-1 rounded-xl mb-3 border border-amber-100">
+                                        <Clock size={12} strokeWidth={3} />
                                         Pendiente
                                     </span>
-                                    <h3 className="font-bold text-slate-900 text-lg leading-tight">{req.productoNombre}</h3>
-                                    <div className="flex flex-col gap-1 mt-1">
-                                        <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5">
-                                            Solicitado por: <span className="text-slate-800 font-bold">{req.clienteNombre}</span>
+                                    <h3 className="font-black text-slate-900 text-lg leading-tight tracking-tighter uppercase mb-2">{req.productoNombre}</h3>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide">
+                                            Solicitado por: <span className="text-slate-900 font-black">@{req.clienteNombre}</span>
                                         </p>
                                         {req.clienteWhatsapp && (
                                             <a
                                                 href={`https://wa.me/${req.clienteWhatsapp.replace(/\D/g, '')}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 bg-green-50 text-green-600 px-3 py-1 rounded-xl text-xs font-black w-max hover:bg-green-100 transition-colors border border-green-100"
+                                                className="inline-flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1.5 rounded-xl text-[10px] font-black w-max hover:bg-green-100 transition-colors border border-green-100 active:scale-95"
                                             >
                                                 <Phone size={12} strokeWidth={3} />
                                                 {req.clienteWhatsapp}
@@ -95,23 +95,24 @@ export const PendingRequestsManager: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-black text-primary-500 text-xl tracking-tighter">${req.precioVenta.toLocaleString()}</p>
+                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Cargar</p>
+                                    <p className="font-black text-primary-500 text-2xl tracking-tighter leading-none">${req.precioVenta.toLocaleString()}</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50">
+                            <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-50 mt-4">
                                 <button
                                     onClick={() => handleAction(req.id, 'cancelado', req.clienteId)}
-                                    className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold border-2 border-red-100 text-red-500 hover:bg-red-50 active:scale-95 transition-all text-sm"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black border-2 border-red-50 text-red-500 hover:bg-red-50 hover:border-red-100 active:scale-95 transition-all text-[11px] uppercase tracking-widest"
                                 >
-                                    <XCircle size={18} />
+                                    <XCircle size={18} strokeWidth={2.5} />
                                     Rechazar
                                 </button>
                                 <button
                                     onClick={() => handleAction(req.id, 'autorizado', req.clienteId)}
-                                    className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600 active:scale-95 transition-all text-sm"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black bg-green-500 text-white shadow-lg shadow-green-500/30 hover:bg-green-600 hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest"
                                 >
-                                    <CheckCircle size={18} />
+                                    <CheckCircle size={18} strokeWidth={2.5} />
                                     Aprobar
                                 </button>
                             </div>

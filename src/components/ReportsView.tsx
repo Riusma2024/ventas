@@ -123,8 +123,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
     return (
         <div className="space-y-8 pb-32 animate-fade-in">
             {/* Main Financial Cards */}
-            <div className="grid grid-cols-1 gap-4">
-                <div className="bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl relative overflow-hidden group md:col-span-2 lg:col-span-1">
                     <div className="absolute right-0 top-0 w-40 h-40 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-all duration-700"></div>
                     <div className="flex justify-between items-start mb-6">
                         <div className="p-4 bg-primary-500 rounded-3xl shadow-lg shadow-primary-500/30">
@@ -141,24 +141,23 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="card-premium space-y-4">
-                        <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 border border-amber-100">
-                            <Users size={20} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Por Cobrar</p>
-                            <h4 className="text-xl font-black text-slate-900 tracking-tighter">${metrics.deudaTotal.toFixed(2)}</h4>
-                        </div>
+                <div className="card-premium flex flex-col justify-center space-y-4">
+                    <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 border border-amber-100">
+                        <Users size={20} strokeWidth={2.5} />
                     </div>
-                    <div className="card-premium space-y-4">
-                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 border border-blue-100">
-                            <Package size={20} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Inversión</p>
-                            <h4 className="text-xl font-black text-slate-900 tracking-tighter">${metrics.inversionInventario.toFixed(2)}</h4>
-                        </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Por Cobrar</p>
+                        <h4 className="text-2xl font-black text-slate-900 tracking-tighter">${metrics.deudaTotal.toFixed(2)}</h4>
+                    </div>
+                </div>
+
+                <div className="card-premium flex flex-col justify-center space-y-4">
+                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 border border-blue-100">
+                        <Package size={20} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Inversión</p>
+                        <h4 className="text-2xl font-black text-slate-900 tracking-tighter">${metrics.inversionInventario.toFixed(2)}</h4>
                     </div>
                 </div>
             </div>
@@ -305,7 +304,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
                     )}
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {salesHistory.length === 0 ? (
                         <div className="card-premium py-12 text-center text-slate-400 italic text-sm">
                             Aún no hay ventas registradas

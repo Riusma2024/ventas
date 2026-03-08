@@ -112,19 +112,28 @@ const Dashboard: React.FC = () => {
         >
             {activeTab === 'home' && (
                 <div className="space-y-6">
-                    {/* Quick Stats */}
-                    <section className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden group">
-                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-500/10 rounded-full blur-2xl group-hover:bg-primary-500/20 transition-all"></div>
-                            <TrendingUp size={24} className="mb-4 text-primary-400" />
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Ventas Hoy</p>
-                            <h3 className="text-3xl font-black tracking-tighter">${totalVendidoHoy.toFixed(2)}</h3>
+                    {/* Quick Stats Stacked */}
+                    <section className="flex flex-col gap-4">
+                        <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden group flex items-center gap-6">
+                            <div className="absolute -right-4 -top-4 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl transition-all"></div>
+                            <div className="bg-white/5 p-4 rounded-[1.5rem] border border-white/10 z-10">
+                                <TrendingUp size={32} className="text-primary-400" />
+                            </div>
+                            <div className="z-10">
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Ventas Hoy</p>
+                                <h3 className="text-4xl font-black tracking-tighter leading-none">${totalVendidoHoy.toFixed(2)}</h3>
+                            </div>
                         </div>
-                        <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-premium relative overflow-hidden group">
-                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent/5 rounded-full blur-2xl group-hover:bg-accent/10 transition-all"></div>
-                            <Wallet size={24} className="mb-4 text-accent" />
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Utilidad Hoy</p>
-                            <h3 className="text-3xl font-black text-slate-900 tracking-tighter">${utilidadHoy.toFixed(2)}</h3>
+
+                        <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-premium relative overflow-hidden group flex items-center gap-6">
+                            <div className="absolute -right-4 -top-4 w-32 h-32 bg-accent/5 rounded-full blur-3xl transition-all"></div>
+                            <div className="bg-accent/5 p-4 rounded-[1.5rem] border border-accent/5 z-10">
+                                <Wallet size={32} className="text-accent" />
+                            </div>
+                            <div className="z-10">
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Utilidad Hoy</p>
+                                <h3 className="text-4xl font-black text-slate-900 tracking-tighter leading-none">${utilidadHoy.toFixed(2)}</h3>
+                            </div>
                         </div>
                     </section>
 
@@ -464,10 +473,15 @@ const Dashboard: React.FC = () => {
                     onClose={() => setIsCartOpen(false)}
                     onRemoveItem={(id) => setCart(cart.filter(item => item.id !== id))}
                     onClearCart={() => { setCart([]); setCartClienteId(''); }}
-                    onSuccess={() => {
+                    onSuccess={async () => {
                         setIsCartOpen(false);
                         setCartClienteId('');
-                        loadData();
+                        try {
+                            await syncAllDebts();
+                            await loadData();
+                        } catch (e) {
+                            console.error('Error post-venta:', e);
+                        }
                         showNotification('¡Ventas registradas y deuda cargada exitosamente!');
                     }}
                 />
@@ -507,8 +521,8 @@ const Dashboard: React.FC = () => {
             {toast && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
                     <div className={`flex items-center gap-3 px-6 py-4 rounded-3xl shadow-2xl backdrop-blur-xl border ${toast.type === 'success'
-                            ? 'bg-green-500/90 border-green-400 text-white'
-                            : 'bg-red-500/90 border-red-400 text-white'
+                        ? 'bg-green-500/90 border-green-400 text-white'
+                        : 'bg-red-500/90 border-red-400 text-white'
                         }`}>
                         <div className="bg-white/20 p-1 rounded-full">
                             {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}

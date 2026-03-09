@@ -253,14 +253,14 @@ export const PublicCatalog: React.FC = () => {
                         <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-600 text-white rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-500/30 transform -rotate-3">
                             <ShoppingBag size={36} strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">¡Hola de nuevo, {rememberedUser.nombre.split(' ')[0]}!</h2>
+                        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">¡Hola de nuevo, {rememberedUser.nombre}!</h2>
                         <p className="text-slate-500 font-medium mb-8">¿Deseas registrar tus apartados con este usuario?</p>
                         <div className="space-y-3">
                             <button
                                 onClick={() => setShowWelcomeModal(false)}
                                 className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-primary-500/20 active:scale-95 transition-all hover:bg-primary-600"
                             >
-                                Sí, continuar como {rememberedUser.nombre.split(' ')[0]}
+                                Sí, continuar como {rememberedUser.nombre}
                             </button>
                             <button
                                 onClick={() => {
@@ -333,7 +333,7 @@ export const PublicCatalog: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">Mi Cuenta</p>
-                                <p className="text-xs font-bold text-slate-100 group-hover:text-primary-400 transition-colors">{clienteAuth.nombre.split(' ')[0]}</p>
+                                <p className="text-xs font-bold text-slate-100 group-hover:text-primary-400 transition-colors">{clienteAuth.nombre}</p>
                             </div>
                         </div>
                         <div className="text-right">

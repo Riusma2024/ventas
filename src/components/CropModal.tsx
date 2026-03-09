@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import Cropper from 'react-easy-crop';
-import { X, Check, Crop } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import ReactCrop, { centerCrop, makeAspectCrop, Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { X, Check, Crop as CropIcon } from 'lucide-react';
 import { getCroppedImg } from '../utils/imageUtils';
 
 interface CropModalProps {
@@ -9,67 +10,78 @@ interface CropModalProps {
     onDone: (croppedImage: string) => void;
 }
 
-export const CropModal: React.FC<CropModalProps> = ({ image, onClose, onDone }) => {
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+// Helper function to center the initial crop
+function centerAspectCrop(
+    mediaWidth: number,
+    mediaHeight: number,
+    aspect: number,
+) {
+    return centerCrop(
+        makeAspectCrop(
+            {
+                unit: '%',
+                width: 90,
+            },
+            aspect,
+            mediaWidth,
+            mediaHeight,
+        ),
+        mediaWidth,
+        mediaHeight,
+    )
+}
 
-    const onCropComplete = (_croppedArea: any, croppedAreaPixels: any) => {
-        setCroppedAreaPixels(croppedAreaPixels);
-    };
+export const CropModal: React.FC<CropModalProps> = ({ image, onClose, onDone }) => {
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+        const { width, height } = e.currentTarget;
+        setCrop(centerAspectCrop(width, height, 1));
+    }
 
     const handleDone = async () => {
-        if (croppedAreaPixels) {
-            const cropped = await getCroppedImg(image, croppedAreaPixels);
+        if (completedCrop && imgRef.current) {
+            const cropped = await getCroppedImg(image, completedCrop);
             onDone(cropped);
         }
     };
 
     return (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[300] flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-lg bg-white rounded-[3rem] overflow-hidden shadow-2xl flex flex-col h-[80vh]">
-                <div className="p-6 flex justify-between items-center border-b border-slate-100">
+            <div className="w-full max-w-2xl bg-white rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                <div className="p-6 flex justify-between items-center border-b border-slate-100 flex-shrink-0">
                     <div className="flex items-center gap-3 text-slate-900">
                         <div className="p-2 bg-slate-100 rounded-xl">
-                            <Crop size={20} className="text-primary-500" />
+                            <CropIcon size={20} className="text-primary-500" />
                         </div>
                         <h3 className="text-xl font-black tracking-tighter">Recortar Imagen</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                    <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
                         <X size={24} strokeWidth={3} />
                     </button>
                 </div>
 
-                <div className="relative flex-1 bg-slate-200">
-                    <Cropper
-                        image={image}
+                <div className="relative flex-1 bg-slate-100 overflow-auto flex items-center justify-center p-6 min-h-0">
+                    <ReactCrop
                         crop={crop}
-                        zoom={zoom}
+                        onChange={(_, percentCrop) => setCrop(percentCrop)}
+                        onComplete={(c) => setCompletedCrop(c)}
                         aspect={1}
-                        onCropChange={setCrop}
-                        onCropComplete={onCropComplete}
-                        onZoomChange={setZoom}
-                    />
+                        className="max-w-full max-h-full"
+                    >
+                        <img
+                            ref={imgRef}
+                            alt="Crop me"
+                            src={image}
+                            onLoad={onImageLoad}
+                            style={{ maxWidth: '100%', maxHeight: '60vh' }}
+                        />
+                    </ReactCrop>
                 </div>
 
-                <div className="p-8 space-y-6 bg-white">
-                    <div className="space-y-4">
-                        <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
-                            <span>Zoom</span>
-                            <span>{zoom.toFixed(1)}x</span>
-                        </div>
-                        <input
-                            type="range"
-                            value={zoom}
-                            min={1}
-                            max={3}
-                            step={0.1}
-                            aria-labelledby="Zoom"
-                            onChange={(e) => setZoom(Number(e.target.value))}
-                            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary-500"
-                        />
-                    </div>
-
+                <div className="p-8 bg-white border-t border-slate-100 flex-shrink-0">
                     <div className="flex gap-4">
                         <button
                             type="button"
@@ -91,7 +103,7 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onClose, onDone }) 
             </div>
 
             <p className="mt-6 text-white/50 text-xs font-medium bg-white/10 px-4 py-2 rounded-full backdrop-blur-md italic">
-                Arrastra la imagen para centrarla y usa la barra de zoom para ajustar
+                Arrastra las esquinas para ajustar el área de recorte
             </p>
         </div>
     );

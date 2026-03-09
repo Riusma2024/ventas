@@ -383,12 +383,12 @@ const Dashboard: React.FC = () => {
                                             className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer"
                                         >
                                             <div className="relative flex-shrink-0">
-                                                {c.foto && c.foto.length > 2 ? (
+                                                {c.foto && c.foto.length >= 1 ? (
                                                     <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-primary-100 shadow-sm">
-                                                        {c.foto.includes('h') ? (
+                                                        {c.foto.startsWith('http') ? (
                                                             <img src={c.foto} className="w-full h-full object-cover" alt={c.nombre} />
                                                         ) : (
-                                                            <div className="w-full h-full bg-slate-900 flex items-center justify-center text-2xl">{c.foto}</div>
+                                                            <div className="w-full h-full bg-slate-50 flex items-center justify-center text-3xl">{c.foto}</div>
                                                         )}
                                                     </div>
                                                 ) : (
@@ -413,7 +413,7 @@ const Dashboard: React.FC = () => {
                                                 <div className="flex flex-col">
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{c.nombre}</p>
                                                     {c.whatsapp && (
-                                                        <p className="text-[10px] text-green-600 font-black tracking-tight">{c.whatsapp}</p>
+                                                        <p className="text-sm text-green-600 font-black tracking-tight">{c.whatsapp}</p>
                                                     )}
                                                 </div>
                                             </div>

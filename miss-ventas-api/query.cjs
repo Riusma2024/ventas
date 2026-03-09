@@ -9,20 +9,11 @@ async function main() {
     });
 
     try {
-        const id = 6;
-        const tenant_id = 2;
-        const foto = "👩"; // Emoji
-
-        console.log("Trying to update foto with emoji...");
-
-        const [result] = await db.query(
-            `UPDATE clientes_app SET foto = ? WHERE id = ? AND tenant_id = ?`,
-            [foto, id, tenant_id]
-        );
-        console.log("Success:", result);
-
-    } catch (error) {
-        console.error("DB Error:", error.message);
+        const [clientes] = await db.query('SELECT id, nombre, apodo, deudaTotal, foto, visto FROM clientes_app WHERE tenant_id = 2');
+        console.log('Clientes con foto/visto:');
+        for (const c of clientes) {
+            console.log(`  ID=${c.id} nombre="${c.nombre}" foto="${c.foto}" visto=${c.visto}`);
+        }
     } finally {
         await db.end();
     }

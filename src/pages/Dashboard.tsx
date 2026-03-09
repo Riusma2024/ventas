@@ -1,3 +1,4 @@
+// v2026.03.09-avatar-fix
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { api } from '../config/api';

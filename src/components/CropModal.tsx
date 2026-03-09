@@ -43,7 +43,21 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onClose, onDone }) 
 
     const handleDone = async () => {
         if (completedCrop && imgRef.current) {
-            const cropped = await getCroppedImg(image, completedCrop);
+            const img = imgRef.current;
+
+            // Calcular el factor de escala entre la imagen mostrada y su tamaño natural
+            const scaleX = img.naturalWidth / img.width;
+            const scaleY = img.naturalHeight / img.height;
+
+            // Escalar las coordenadas del recorte al tamaño real de la imagen
+            const naturalCrop = {
+                x: completedCrop.x * scaleX,
+                y: completedCrop.y * scaleY,
+                width: completedCrop.width * scaleX,
+                height: completedCrop.height * scaleY
+            };
+
+            const cropped = await getCroppedImg(image, naturalCrop);
             onDone(cropped);
         }
     };

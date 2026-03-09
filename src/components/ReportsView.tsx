@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { Calendar, Filter } from 'lucide-react';
+
+type PeriodoFiltro = 'hoy' | 'semana' | 'mes' | 'año' | 'rango' | 'todos';
 
 interface ReportsViewProps {
     onShowCriticalStock: () => void;
@@ -47,7 +50,62 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
     }, []);
 
     const [filtroCliente, setFiltroCliente] = useState<string>('');
-    const [filtroFecha, setFiltroFecha] = useState<string>('');
+    const [periodo, setPeriodo] = useState<PeriodoFiltro>('todos');
+    const [fechaInicio, setFechaInicio] = useState<string>('');
+    const [fechaFin, setFechaFin] = useState<string>('');
+
+    // Helper to calculate date ranges
+    const getRangeDates = (type: PeriodoFiltro, start?: string, end?: string) => {
+        const now = new Date();
+        let s = new Date();
+        let e = new Date();
+
+        switch (type) {
+            case 'hoy':
+                s.setHours(0, 0, 0, 0);
+                e.setHours(23, 59, 59, 999);
+                break;
+            case 'semana':
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+                s = new Date(now.setDate(diff));
+                s.setHours(0, 0, 0, 0);
+                e = new Date(); // Up to now
+                e.setHours(23, 59, 59, 999);
+                break;
+            case 'mes':
+                s = new Date(now.getFullYear(), now.getMonth(), 1);
+                e = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+                break;
+            case 'año':
+                s = new Date(now.getFullYear(), 0, 1);
+                e = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+                break;
+            case 'rango':
+                if (start) s = new Date(start + 'T00:00:00');
+                if (end) e = new Date(end + 'T23:59:59');
+                break;
+            default:
+                return null;
+        }
+        return { s, e };
+    };
+
+    // Filtered Sales for both Metrics and History
+    const filteredSales = useMemo(() => {
+        if (!ventas) return [];
+        const range = getRangeDates(periodo, fechaInicio, fechaFin);
+
+        return ventas.filter(v => {
+            const matchCliente = filtroCliente ? v.clienteId === Number(filtroCliente) : true;
+            let matchFecha = true;
+            if (range) {
+                const vTime = new Date(v.fecha).getTime();
+                matchFecha = vTime >= range.s.getTime() && vTime <= range.e.getTime();
+            }
+            return matchCliente && matchFecha;
+        });
+    }, [ventas, periodo, fechaInicio, fechaFin, filtroCliente]);
 
     // Process Sales Data for the Chart (Last 7 Days)
     const chartData = useMemo(() => {
@@ -76,13 +134,17 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
         return last7Days;
     }, [ventas]);
 
-    // Summary Metrics
+    // Summary Metrics based on filtered sales
     const metrics = useMemo(() => {
-        const totalVentas = ventas?.reduce((acc, v) => acc + Number(v.precioVenta || 0), 0) || 0;
-        const totalUtilidad = ventas?.reduce((acc, v) => acc + Number(v.utilidad || 0), 0) || 0;
+        const totalVentas = filteredSales?.reduce((acc, v) => acc + Number(v.precioVenta || 0), 0) || 0;
+        const totalUtilidad = filteredSales?.reduce((acc, v) => acc + Number(v.utilidad || 0), 0) || 0;
         const inversionInventario = productos?.reduce((acc, p) => acc + (Number(p.costo || 0) * Number(p.stock || 0)), 0) || 0;
         const valorVentaEsperado = productos?.reduce((acc, p) => acc + (Number(p.precioSugerido || 0) * Number(p.stock || 0)), 0) || 0;
-        const deudaTotal = clientes?.reduce((acc, c) => acc + Number(c.deudaTotal || 0), 0) || 0;
+
+        // Deuda total is usually global, but if a client is selected, we show only their debt
+        const relevantClients = filtroCliente ? clientes.filter(c => c.id === Number(filtroCliente)) : clientes;
+        const deudaTotal = relevantClients?.reduce((acc, c) => acc + Number(c.deudaTotal || 0), 0) || 0;
+
         const stockBajo = productos?.filter(p => p.stock <= 2 && p.stock > 0).length || 0;
         const agotados = productos?.filter(p => p.stock === 0).length || 0;
 
@@ -96,24 +158,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
             agotados,
             margenPromedio: totalVentas > 0 ? (totalUtilidad / totalVentas) * 100 : 0
         };
-    }, [ventas, productos, clientes]);
+    }, [filteredSales, productos, clientes, filtroCliente]);
 
-    // Detailed and Filtered Sales History
+    // Detailed History using common filtered set
     const salesHistory = useMemo(() => {
-        if (!ventas || !productos || !clientes) return [];
-        return ventas
-            .filter(v => {
-                const matchCliente = filtroCliente ? v.clienteId === Number(filtroCliente) : true;
-                const matchFecha = filtroFecha ? v.fecha.toISOString().split('T')[0] === filtroFecha : true;
-                return matchCliente && matchFecha;
-            })
+        if (!filteredSales || !productos || !clientes) return [];
+        return filteredSales
             .map(v => ({
                 ...v,
                 producto: productos.find(p => p.id === v.productoId),
                 cliente: clientes.find(c => c.id === v.clienteId)
             }))
             .sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
-    }, [ventas, productos, clientes, filtroCliente, filtroFecha]);
+    }, [filteredSales, productos, clientes]);
 
     const pieData = [
         { name: 'Inversión', value: metrics.inversionInventario, color: '#64748b' },
@@ -270,37 +327,97 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowCriticalStock })
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{salesHistory.length} Registros</span>
                 </div>
 
-                {/* Filters UI */}
-                <div className="flex gap-3 px-2 overflow-x-auto no-scrollbar pb-2">
-                    <div className="flex-1 min-w-[140px]">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Filtrar por Cliente</label>
-                        <select
-                            className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 outline-none focus:border-primary-300 transition-colors"
-                            value={filtroCliente}
-                            onChange={(e) => setFiltroCliente(e.target.value)}
-                        >
-                            <option value="">Todos los Clientes</option>
-                            {clientes?.map(c => (
-                                <option key={c.id} value={c.id}>{c.apodo}</option>
-                            ))}
-                        </select>
+                {/* Advanced Filters UI */}
+                <div className="bg-white/50 backdrop-blur-md border border-slate-100 rounded-3xl p-4 shadow-sm space-y-4">
+                    <div className="flex flex-wrap gap-4">
+                        {/* Cliente Filter */}
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2 block flex items-center gap-2">
+                                <Users size={12} className="text-primary-400" />
+                                Filtrar por Cliente
+                            </label>
+                            <select
+                                className="w-full bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all appearance-none"
+                                value={filtroCliente}
+                                onChange={(e) => setFiltroCliente(e.target.value)}
+                            >
+                                <option value="">Todos los Clientes</option>
+                                {clientes?.map(c => (
+                                    <option key={c.id} value={c.id}>@{c.apodo}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Period Filter */}
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2 block flex items-center gap-2">
+                                <Clock size={12} className="text-primary-400" />
+                                Periodo de tiempo
+                            </label>
+                            <select
+                                className="w-full bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all appearance-none"
+                                value={periodo}
+                                onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
+                            >
+                                <option value="todos">Todo el historial</option>
+                                <option value="hoy">Hoy</option>
+                                <option value="semana">Esta Semana</option>
+                                <option value="mes">Este Mes</option>
+                                <option value="año">Este Año</option>
+                                <option value="rango">Rango Personalizado</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className="flex-1 min-w-[140px]">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Filtrar por Fecha</label>
-                        <input
-                            type="date"
-                            className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 outline-none focus:border-primary-300 transition-colors"
-                            value={filtroFecha}
-                            onChange={(e) => setFiltroFecha(e.target.value)}
-                        />
-                    </div>
-                    {(filtroCliente || filtroFecha) && (
-                        <button
-                            onClick={() => { setFiltroCliente(''); setFiltroFecha(''); }}
-                            className="mt-4 p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200 transition-colors self-end"
+
+                    {/* Custom Range Inputs */}
+                    {periodo === 'rango' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex flex-wrap gap-4 pt-2 border-t border-slate-50"
                         >
-                            <X size={14} strokeWidth={3} />
-                        </button>
+                            <div className="flex-1 min-w-[140px]">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Fecha Inicio</label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-primary-300"
+                                        value={fechaInicio}
+                                        onChange={(e) => setFechaInicio(e.target.value)}
+                                    />
+                                    <Calendar size={14} className="absolute right-3 top-2.5 text-slate-300 pointer-events-none" />
+                                </div>
+                            </div>
+                            <div className="flex-1 min-w-[140px]">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Fecha Fin</label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-primary-300"
+                                        value={fechaFin}
+                                        onChange={(e) => setFechaFin(e.target.value)}
+                                    />
+                                    <Calendar size={14} className="absolute right-3 top-2.5 text-slate-300 pointer-events-none" />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {(filtroCliente || periodo !== 'todos') && (
+                        <div className="flex justify-end pt-2">
+                            <button
+                                onClick={() => {
+                                    setFiltroCliente('');
+                                    setPeriodo('todos');
+                                    setFechaInicio('');
+                                    setFechaFin('');
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-colors text-[10px] font-black uppercase"
+                            >
+                                <X size={14} strokeWidth={3} />
+                                Limpiar Filtros
+                            </button>
+                        </div>
                     )}
                 </div>
 

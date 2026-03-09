@@ -16,6 +16,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     const [precio, setPrecio] = useState(producto?.precioSugerido.toString() || '');
     const [stock, setStock] = useState(producto?.stock.toString() || '1');
     const [foto, setFoto] = useState<string | undefined>(producto?.foto);
+    const [descripcion, setDescripcion] = useState(producto?.descripcion || '');
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -37,7 +38,8 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                 costo: Number(costo),
                 precioSugerido: Number(precio),
                 stock: Number(stock),
-                foto
+                foto,
+                descripcion
             };
 
             if (producto?.id) {
@@ -52,8 +54,8 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20 my-auto">
                 <div className="flex justify-between items-center px-2">
                     <div>
                         <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
@@ -96,6 +98,16 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                                 placeholder="Ej. Bolso de Piel"
                                 value={nombre}
                                 onChange={(e) => setNombre(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Descripción (Opcional)</label>
+                            <textarea
+                                className="input-field min-h-[80px] py-3 resize-none"
+                                placeholder="Añade detalles del producto..."
+                                value={descripcion}
+                                onChange={(e) => setDescripcion(e.target.value)}
                             />
                         </div>
 

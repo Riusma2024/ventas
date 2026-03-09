@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ShoppingBag, Search, X, ShoppingCart, Plus, Minus, Send, User } from 'lucide-react';
+import { ShoppingBag, Search, X, ShoppingCart, Plus, Minus, Send, User, Share2, ExternalLink, ChevronLeft, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../config/api';
 
 interface Producto {
@@ -10,6 +11,7 @@ interface Producto {
     foto: string | null;
     categoria: string | null;
     stock: number;
+    descripcion: string | null;
 }
 
 interface CartItem extends Producto {
@@ -37,6 +39,7 @@ export const PublicCatalog: React.FC = () => {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [loginCode, setLoginCode] = useState('');
     const [loginError, setLoginError] = useState<string | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
 
     // Memoria de dispositivo
     const [rememberedUser, setRememberedUser] = useState<{ nombre: string, whatsapp: string } | null>(null);
@@ -180,6 +183,44 @@ export const PublicCatalog: React.FC = () => {
     const cartTotal = cart.reduce((acc, item) => acc + (Number(item.precioSugerido) * item.cantidad), 0);
     const totalItems = cart.reduce((acc, item) => acc + item.cantidad, 0);
 
+    const shareCatalog = async () => {
+        const shareData = {
+            title: `Catálogo de ${negocio} - Miss Ventas`,
+            text: `¡Hola! Te comparto el catálogo de ${negocio}. Puedes ver todos los productos disponibles aquí:`,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                alert('¡Enlace copiado al portapapeles!');
+            }
+        } catch (err) {
+            console.error('Error al compartir catálogo:', err);
+        }
+    };
+
+    const shareProduct = async (prod: Producto) => {
+        const shareData = {
+            title: prod.nombre,
+            text: `¡Mira este ${prod.nombre} en ${negocio}! 😍 Solo $${Number(prod.precioSugerido).toLocaleString()}. Puedes verlo aquí:`,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                alert('¡Enlace del producto copiado!');
+            }
+        } catch (err) {
+            console.error('Error al compartir producto:', err);
+        }
+    };
+
     if (isLoading) {
         return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">Cargando catálogo...</div>;
     }
@@ -256,6 +297,13 @@ export const PublicCatalog: React.FC = () => {
                             </button>
                         )}
                         <button
+                            onClick={shareCatalog}
+                            className="p-3 bg-slate-50 text-slate-600 rounded-2xl hover:bg-slate-100 transition-colors"
+                            title="Compartir Catálogo"
+                        >
+                            <Share2 size={22} />
+                        </button>
+                        <button
                             onClick={() => setIsCartOpen(true)}
                             className="relative p-3 bg-primary-50 text-primary-600 rounded-2xl hover:bg-primary-100 transition-colors"
                         >
@@ -317,12 +365,18 @@ export const PublicCatalog: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {filteredProducts.map(prod => (
                         <div key={prod.id} className="bg-white rounded-3xl p-4 border border-slate-100 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-all group overflow-hidden">
-                            <div className="w-full aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
+                            <div
+                                className="w-full aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center cursor-zoom-in group-hover:shadow-lg transition-all"
+                                onClick={() => setSelectedProduct(prod)}
+                            >
                                 {prod.foto ? (
-                                    <img src={prod.foto} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    <img src={prod.foto} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                 ) : (
                                     <ShoppingBag size={40} className="text-slate-200" />
                                 )}
+                                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors flex items-center justify-center">
+                                    <Maximize2 size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                </div>
                             </div>
                             <h3 className="font-bold text-slate-800 text-sm mb-1 leading-tight line-clamp-2 min-h-[40px]">{prod.nombre}</h3>
                             <p className="font-black text-primary-500 text-lg mb-4">${Number(prod.precioSugerido).toLocaleString()}</p>
@@ -473,6 +527,95 @@ export const PublicCatalog: React.FC = () => {
                     </form>
                 </div>
             )}
+
+            {/* Product Detail Modal */}
+            <AnimatePresence>
+                {selectedProduct && (
+                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white w-full max-w-lg rounded-[3.5rem] overflow-hidden shadow-2xl relative"
+                        >
+                            <button
+                                onClick={() => setSelectedProduct(null)}
+                                className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md text-slate-900 rounded-3xl z-10 shadow-lg active:scale-95 transition-all"
+                            >
+                                <X size={24} strokeWidth={3} />
+                            </button>
+
+                            <div className="overflow-y-auto max-h-[90vh]">
+                                <div className="relative w-full aspect-square bg-slate-100">
+                                    {selectedProduct.foto ? (
+                                        <img src={selectedProduct.foto} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                            <ShoppingBag size={80} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-8 space-y-6">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div>
+                                            <p className="text-[10px] font-black text-primary-500 uppercase tracking-[0.2em] mb-1">
+                                                {selectedProduct.categoria || 'Producto'}
+                                            </p>
+                                            <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">
+                                                {selectedProduct.nombre}
+                                            </h2>
+                                        </div>
+                                        <button
+                                            onClick={() => shareProduct(selectedProduct)}
+                                            className="p-4 bg-slate-900 text-white rounded-3xl shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+                                        >
+                                            <Share2 size={24} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-6 border-y border-slate-50">
+                                        <span className="text-4xl font-black text-slate-900 tracking-tighter">
+                                            ${Number(selectedProduct.precioSugerido).toLocaleString()}
+                                        </span>
+                                        <div className={`px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest ${selectedProduct.stock > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                            {selectedProduct.stock > 0 ? `Stock: ${selectedProduct.stock}` : 'Agotado'}
+                                        </div>
+                                    </div>
+
+                                    {selectedProduct.descripcion && (
+                                        <div className="space-y-2">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</h4>
+                                            <p className="text-slate-600 font-medium leading-relaxed bg-slate-50 p-6 rounded-[2rem]">
+                                                {selectedProduct.descripcion}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-4 pt-4">
+                                        <div className="flex items-center bg-slate-100 rounded-[2rem] px-4 py-2 border border-slate-200">
+                                            <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.max(1, (prev[selectedProduct.id] || 1) - 1) }))} className="p-3 text-slate-500"><Minus size={20} strokeWidth={3} /></button>
+                                            <span className="w-12 text-center font-black text-xl">{quantities[selectedProduct.id] || 1}</span>
+                                            <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.min(selectedProduct.stock, (prev[selectedProduct.id] || 1) + 1) }))} className="p-3 text-slate-500"><Plus size={20} strokeWidth={3} /></button>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                addToCart(selectedProduct, quantities[selectedProduct.id] || 1);
+                                                setSelectedProduct(null);
+                                            }}
+                                            className="flex-1 bg-primary-500 text-white rounded-[2rem] font-black uppercase tracking-wider shadow-2xl shadow-primary-500/30 flex items-center justify-center gap-3 active:scale-95 transition-all"
+                                            disabled={selectedProduct.stock <= 0}
+                                        >
+                                            <Plus size={24} strokeWidth={3} />
+                                            Añadir al Carrito
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

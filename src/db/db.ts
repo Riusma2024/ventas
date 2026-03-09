@@ -8,6 +8,7 @@ export interface Producto {
     foto?: string; // Base64 o Blob URL
     stock: number;
     categoria?: string;
+    descripcion?: string;
 }
 
 export interface Venta {

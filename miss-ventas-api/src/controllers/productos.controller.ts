@@ -24,7 +24,7 @@ export const getProductos = async (req: AuthRequest, res: Response): Promise<voi
 export const createProducto = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const tenant_id = req.user?.tenant_id;
-        const { nombre, costo, precioSugerido, categoria, foto, stock } = req.body;
+        const { nombre, costo, precioSugerido, categoria, foto, stock, descripcion } = req.body;
 
         if (!nombre || costo === undefined || precioSugerido === undefined) {
             res.status(400).json({ error: 'Faltan datos requeridos (nombre, costo, precioSugerido)' });
@@ -34,8 +34,8 @@ export const createProducto = async (req: AuthRequest, res: Response): Promise<v
         const initialStock = stock || 0;
 
         const [result] = await db.query<any>(
-            'INSERT INTO productos (tenant_id, nombre, costo, precioSugerido, categoria, foto, stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [tenant_id, nombre, costo, precioSugerido, categoria || null, foto || null, initialStock]
+            'INSERT INTO productos (tenant_id, nombre, costo, precioSugerido, categoria, foto, stock, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [tenant_id, nombre, costo, precioSugerido, categoria || null, foto || null, initialStock, descripcion || null]
         );
 
         res.status(201).json({ id: result.insertId, ...req.body, tenant_id });
@@ -50,13 +50,13 @@ export const updateProducto = async (req: AuthRequest, res: Response): Promise<v
     try {
         const { id } = req.params;
         const tenant_id = req.user?.tenant_id;
-        const { nombre, costo, precioSugerido, categoria, foto, stock } = req.body;
+        const { nombre, costo, precioSugerido, categoria, foto, stock, descripcion } = req.body;
 
         const [result] = await db.query<any>(
             `UPDATE productos 
-             SET nombre = ?, costo = ?, precioSugerido = ?, categoria = ?, foto = ?, stock = ?
+             SET nombre = ?, costo = ?, precioSugerido = ?, categoria = ?, foto = ?, stock = ?, descripcion = ?
              WHERE id = ? AND tenant_id = ?`,
-            [nombre, costo, precioSugerido, categoria || null, foto || null, stock, id, tenant_id]
+            [nombre, costo, precioSugerido, categoria || null, foto || null, stock, descripcion || null, id, tenant_id]
         );
 
         if (result.affectedRows === 0) {

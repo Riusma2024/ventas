@@ -1,5 +1,5 @@
 import React from 'react';
-import { type Cliente, type Abono } from '../db/db';
+import { type Cliente, type Abono, type Producto } from '../db/db';
 import { X, Clock, Package, DollarSign, Wallet, Phone, Facebook, Globe, Plus, CheckCircle, XCircle, Image as ImageIcon, Edit } from 'lucide-react';
 import { AddAbonoForm } from './AddAbonoForm';
 import { EditAbonoForm } from './EditAbonoForm';
@@ -9,9 +9,10 @@ import { api } from '../config/api';
 interface ClientAccountStatementProps {
     cliente: Cliente;
     onClose: () => void;
+    onSelectProduct?: (producto: Producto) => void;
 }
 
-export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ cliente, onClose }) => {
+export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ cliente, onClose, onSelectProduct }) => {
     const [isAddAbonoOpen, setIsAddAbonoOpen] = useState(false);
     const [editingAbono, setEditingAbono] = useState<Abono | null>(null);
 
@@ -32,7 +33,10 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
             const updatedClient = cliRes.data.find((c: Cliente) => c.id === cliente.id);
             if (updatedClient) setClienteActualizado(updatedClient);
 
-            const allProducts = prodRes.data;
+            const allProducts = prodRes.data.map((p: any) => ({
+                ...p,
+                imagenes: p.imagenes ? (typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : p.imagenes) : []
+            }));
             const clientSales = ventRes.data
                 .filter((v: any) => v.clienteId === cliente.id)
                 .map((v: any) => {
@@ -189,12 +193,25 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                             </div>
                         ) : (
                             ventasDetalladas.map(v => (
-                                <div key={v.id} className="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center">
-                                    <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <div
+                                    key={v.id}
+                                    onClick={() => {
+                                        if (v.producto && onSelectProduct) {
+                                            onSelectProduct(v.producto);
+                                        }
+                                    }}
+                                    className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center transition-all ${onSelectProduct && v.producto ? 'cursor-pointer hover:border-primary-300 active:scale-95 group' : ''}`}
+                                >
+                                    <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                                         {v.producto?.foto ? (
                                             <img src={v.producto.foto} alt={v.producto.nombre} className="w-full h-full object-cover" />
                                         ) : (
                                             <Package className="text-slate-400" size={20} />
+                                        )}
+                                        {onSelectProduct && v.producto && (
+                                            <div className="absolute inset-0 bg-primary-500/0 group-hover:bg-primary-500/40 transition-colors flex items-center justify-center">
+                                                <Plus size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </div>
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -207,6 +224,9 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                                         <h5 className="font-black text-slate-900 text-sm tracking-tighter truncate">
                                             {v.producto?.nombre || 'Producto eliminado'}
                                         </h5>
+                                        {onSelectProduct && v.producto && (
+                                            <p className="text-[8px] font-black text-primary-500 uppercase tracking-widest mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">Volver a vender</p>
+                                        )}
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Total</p>

@@ -527,7 +527,17 @@ const Dashboard: React.FC = () => {
                     }}
                 />
             )}
-            {selectedClientAccount && <ClientAccountStatement cliente={selectedClientAccount} onClose={() => setSelectedClientAccount(null)} />}
+            {selectedClientAccount && (
+                <ClientAccountStatement
+                    cliente={selectedClientAccount}
+                    onClose={() => setSelectedClientAccount(null)}
+                    onSelectProduct={(p) => {
+                        setCartClienteId(selectedClientAccount.id?.toString() || '');
+                        setSelectedProduct(p);
+                        setSelectedClientAccount(null);
+                    }}
+                />
+            )}
             {selectedSale && <SaleDetail venta={selectedSale} onClose={() => setSelectedSale(null)} />}
             {isCriticalStockOpen && (
                 <CriticalStockModal

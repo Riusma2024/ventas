@@ -22,7 +22,13 @@ export const resizeImage = (base64Str: string, maxWidth = 800, maxHeight = 800):
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
+
+            if (ctx) {
+                // Rellenar con blanco para evitar fondo negro en imágenes transparentes (PNG/WebP) al convertir a JPEG
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+            }
             resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
     });
@@ -43,6 +49,10 @@ export const getCroppedImg = (imageSrc: string, pixelCrop: { x: number, y: numbe
 
             canvas.width = pixelCrop.width;
             canvas.height = pixelCrop.height;
+
+            // Rellenar con blanco para evitar fondo negro en imágenes transparentes (PNG/WebP) al convertir a JPEG
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, pixelCrop.width, pixelCrop.height);
 
             ctx.drawImage(
                 image,

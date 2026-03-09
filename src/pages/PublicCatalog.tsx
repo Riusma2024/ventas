@@ -548,14 +548,46 @@ export const PublicCatalog: React.FC = () => {
                                         <p className="text-center py-10 text-slate-400 font-medium italic">Sin adquisiciones aún</p>
                                     ) : (
                                         clienteAuth.ventas.map((v: any) => (
-                                            <div key={v.id} className="bg-white border border-slate-100 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                                                <div className="flex flex-col gap-1">
-                                                    <p className="text-sm font-black text-slate-800 tracking-tight leading-tight uppercase line-clamp-1">{v.productoNombre}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold">{new Date(v.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                            <div
+                                                key={v.id}
+                                                onClick={() => {
+                                                    const productData: Producto = {
+                                                        id: v.productoId,
+                                                        nombre: v.productoNombre,
+                                                        precioSugerido: v.productoPrecioOriginal,
+                                                        foto: v.productoFoto,
+                                                        categoria: v.productoCategoria,
+                                                        stock: v.productoStock,
+                                                        descripcion: v.productoDescripcion,
+                                                        imagenes: v.productoImagenes ? (typeof v.productoImagenes === 'string' ? JSON.parse(v.productoImagenes) : v.productoImagenes) : []
+                                                    };
+                                                    setSelectedProduct(productData);
+                                                    setActiveModalImage(productData.foto);
+                                                }}
+                                                className="bg-white border border-slate-100 p-3 rounded-2xl flex gap-3 items-center shadow-sm hover:border-accent/30 transition-all cursor-pointer group active:scale-[0.98]"
+                                            >
+                                                {/* Miniatura */}
+                                                <div className="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 border border-slate-50 group-hover:border-accent/20 transition-all">
+                                                    {v.productoFoto ? (
+                                                        <img src={v.productoFoto} alt={v.productoNombre} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                            <ShoppingBag size={18} />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="text-right flex flex-col items-end gap-1">
-                                                    <p className="font-black text-slate-900 tracking-tighter">$ {v.precioVenta}</p>
-                                                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md ${v.pagado ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'}`}>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                                        <p className="text-[11px] font-black text-slate-800 tracking-tight leading-tight uppercase truncate">{v.productoNombre}</p>
+                                                        <ExternalLink size={10} className="text-slate-300 group-hover:text-accent transition-colors" />
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-400 font-bold">{new Date(v.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                                </div>
+
+                                                <div className="text-right flex flex-col items-end gap-1 flex-shrink-0">
+                                                    <p className="font-black text-slate-900 tracking-tighter text-sm">$ {v.precioVenta}</p>
+                                                    <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-md ${v.pagado ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'}`}>
                                                         {v.pagado ? 'SALDADO' : (v.estado === 'apartado' ? 'PENDIENTE' : 'A CUENTA')}
                                                     </span>
                                                 </div>
@@ -767,21 +799,29 @@ export const PublicCatalog: React.FC = () => {
                                     )}
 
                                     <div className="flex gap-4 pt-4">
-                                        <div className="flex items-center bg-slate-100 rounded-[2rem] px-4 py-2 border border-slate-200">
-                                            <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.max(1, (prev[selectedProduct.id] || 1) - 1) }))} className="p-3 text-slate-500"><Minus size={20} strokeWidth={3} /></button>
-                                            <span className="w-12 text-center font-black text-xl">{quantities[selectedProduct.id] || 1}</span>
-                                            <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.min(selectedProduct.stock, (prev[selectedProduct.id] || 1) + 1) }))} className="p-3 text-slate-500"><Plus size={20} strokeWidth={3} /></button>
-                                        </div>
+                                        {selectedProduct.stock > 0 && (
+                                            <div className="flex items-center bg-slate-100 rounded-[2rem] px-4 py-2 border border-slate-200">
+                                                <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.max(1, (prev[selectedProduct.id] || 1) - 1) }))} className="p-3 text-slate-500"><Minus size={20} strokeWidth={3} /></button>
+                                                <span className="w-12 text-center font-black text-xl">{quantities[selectedProduct.id] || 1}</span>
+                                                <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.min(selectedProduct.stock, (prev[selectedProduct.id] || 1) + 1) }))} className="p-3 text-slate-500"><Plus size={20} strokeWidth={3} /></button>
+                                            </div>
+                                        )}
                                         <button
                                             onClick={() => {
                                                 addToCart(selectedProduct, quantities[selectedProduct.id] || 1);
                                                 setSelectedProduct(null);
                                             }}
-                                            className="flex-1 bg-primary-500 text-white rounded-[2rem] font-black uppercase tracking-wider shadow-2xl shadow-primary-500/30 flex items-center justify-center gap-3 active:scale-95 transition-all"
+                                            className={`flex-1 rounded-[2rem] font-black uppercase tracking-wider shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all ${selectedProduct.stock > 0 ? 'bg-primary-500 text-white shadow-primary-500/30' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
                                             disabled={selectedProduct.stock <= 0}
                                         >
-                                            <Plus size={24} strokeWidth={3} />
-                                            Añadir al Carrito
+                                            {selectedProduct.stock > 0 ? (
+                                                <>
+                                                    <Plus size={24} strokeWidth={3} />
+                                                    Añadir al Carrito
+                                                </>
+                                            ) : (
+                                                'Agotado'
+                                            )}
                                         </button>
                                     </div>
                                 </div>

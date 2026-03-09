@@ -38,7 +38,12 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
         if (clienteData) {
             // Historial de Ventas (Adquisiciones)
             const [vRows] = await db.query<any[]>(
-                `SELECT v.id, v.precioVenta, v.fecha, v.estado, v.pagado, p.nombre as productoNombre 
+                `SELECT 
+                    v.id, v.precioVenta, v.fecha, v.estado, v.pagado, 
+                    p.id as productoId, p.nombre as productoNombre, p.foto as productoFoto, 
+                    p.precioSugerido as productoPrecioOriginal, p.stock as productoStock, 
+                    p.categoria as productoCategoria, p.descripcion as productoDescripcion, 
+                    p.imagenes as productoImagenes
                  FROM ventas v 
                  JOIN productos p ON v.productoId = p.id 
                  WHERE v.clienteId = ? AND v.tenant_id = ?

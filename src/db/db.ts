@@ -10,6 +10,7 @@ export interface Producto {
     categoria?: string;
     descripcion?: string;
     imagenes?: string[]; // Galería de imágenes
+    tenant_id?: string;
 }
 
 export interface Venta {

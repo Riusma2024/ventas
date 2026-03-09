@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { api } from '../config/api';
 import { Layout } from '../components/Layout';
-import { db, type Producto } from '../db/db';
+import { db } from '../db/db';
 import { AddProductForm } from '../components/AddProductForm';
 import { AddClientForm } from '../components/AddClientForm';
 import { SellProductForm } from '../components/SellProductForm';
@@ -16,9 +16,11 @@ import { syncAllDebts } from '../utils/dbUtils';
 import { useAuth } from '../context/AuthContext';
 import { ClientAccountStatement } from '../components/ClientAccountStatement';
 import { SaleDetail } from '../components/SaleDetail';
-import { CriticalStockModal } from '../components/CriticalStockModal';
-import { type Cliente, type Venta } from '../db/db';
+import { type Cliente, type Venta, type Producto } from '../db/db';
+import { ProductDetail } from '../components/ProductDetail';
 import { ShareMenu } from '../components/ShareMenu';
+import { CriticalStockModal } from '../components/CriticalStockModal';
+import { AnimatePresence } from 'framer-motion';
 
 const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('home');
@@ -28,6 +30,8 @@ const Dashboard: React.FC = () => {
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [selectedClientAccount, setSelectedClientAccount] = useState<Cliente | null>(null);
     const [selectedSale, setSelectedSale] = useState<Venta | null>(null);
+    const [viewingProduct, setViewingProduct] = useState<Producto | null>(null);
+    const [viewingClient, setViewingClient] = useState<Cliente | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     // Cargar clientes vistos de localStorage
@@ -532,9 +536,8 @@ const Dashboard: React.FC = () => {
                     cliente={selectedClientAccount}
                     onClose={() => setSelectedClientAccount(null)}
                     onSelectProduct={(p) => {
-                        setCartClienteId(selectedClientAccount.id?.toString() || '');
-                        setSelectedProduct(p);
-                        setSelectedClientAccount(null);
+                        setViewingProduct(p);
+                        setViewingClient(selectedClientAccount);
                     }}
                 />
             )}
@@ -542,7 +545,7 @@ const Dashboard: React.FC = () => {
             {isCriticalStockOpen && (
                 <CriticalStockModal
                     onClose={() => setIsCriticalStockOpen(false)}
-                    onEditProduct={(p) => {
+                    onEditProduct={(p: Producto) => {
                         setIsCriticalStockOpen(false);
                         setEditingProduct(p);
                     }}
@@ -557,6 +560,23 @@ const Dashboard: React.FC = () => {
                 url={shareConfig.url}
                 onCopySuccess={() => showNotification('¡Enlace copiado al portapapeles!')}
             />
+
+            <AnimatePresence>
+                {viewingProduct && (
+                    <ProductDetail
+                        producto={viewingProduct}
+                        cliente={viewingClient || undefined}
+                        onClose={() => { setViewingProduct(null); setViewingClient(null); }}
+                        onSellAgain={(p, c) => {
+                            setViewingProduct(null);
+                            setViewingClient(null);
+                            setCartClienteId(c.id?.toString() || '');
+                            setSelectedProduct(p);
+                            setSelectedClientAccount(null); // Aquí sí cerramos para ir al form
+                        }}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Image Zoom Modal */}
             {zoomedImage && (

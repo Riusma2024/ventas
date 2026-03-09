@@ -72,12 +72,14 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onClose, onDone }) 
 
                     <div className="flex gap-4">
                         <button
+                            type="button"
                             onClick={onClose}
                             className="flex-1 px-6 py-4 rounded-2xl font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             Cancelar
                         </button>
                         <button
+                            type="button"
                             onClick={handleDone}
                             className="flex-1 px-6 py-4 rounded-2xl font-black text-white bg-primary-500 shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 hover:translate-y-[-2px] active:scale-95 transition-all"
                         >

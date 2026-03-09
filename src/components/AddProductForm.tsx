@@ -64,14 +64,18 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
         const newImages = imagenes.filter((_, i) => i !== index);
         setImagenes(newImages);
 
-        // Si la que borramos era la principal, mover la principal a la siguiente disponible
+        // Si la que borramos era la principal, simplemente quitarla (no forzar otra)
         if (foto === imgToRemove) {
-            setFoto(newImages.length > 0 ? newImages[0] : undefined);
+            setFoto(undefined);
         }
     };
 
     const setAsMain = (img: string) => {
-        setFoto(img);
+        if (foto === img) {
+            setFoto(undefined);
+        } else {
+            setFoto(img);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -123,8 +127,16 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                                 {foto ? (
                                     <>
                                         <img src={foto} alt="Main" className="w-full h-full object-contain" />
-                                        <div className="absolute inset-0 bg-black/20 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute inset-0 bg-black/20 flex items-end justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-900">Portada</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFoto(undefined)}
+                                                className="bg-red-500 text-white p-2 rounded-xl shadow-lg hover:bg-red-600 transition-colors"
+                                                title="Quitar portada"
+                                            >
+                                                <X size={14} strokeWidth={3} />
+                                            </button>
                                         </div>
                                     </>
                                 ) : (
@@ -153,7 +165,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                                                 className="p-1 bg-white text-primary-500 rounded-lg hover:scale-110 transition-transform"
                                                 title="Poner como principal"
                                             >
-                                                <Star size={12} fill={foto === img ? "currentColor" : "none"} strokeWidth={3} />
+                                                <Star size={12} fill={foto === img ? "currentColor" : "none"} strokeWidth={3} className={foto === img ? "text-primary-500" : "text-slate-400"} />
                                             </button>
                                             <button
                                                 type="button"

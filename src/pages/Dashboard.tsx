@@ -80,10 +80,11 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
         try {
             setLoadingData(true);
+            const ts = Date.now();
             const [prodRes, cliRes, ventRes] = await Promise.all([
-                api.get('/productos'),
-                api.get('/clientes'),
-                api.get('/ventas')
+                api.get(`/productos?t=${ts}`),
+                api.get(`/clientes?t=${ts}`),
+                api.get(`/ventas?t=${ts}`)
             ]);
 
             setProductos(prodRes.data);

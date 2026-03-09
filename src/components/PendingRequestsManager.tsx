@@ -22,7 +22,7 @@ export const PendingRequestsManager: React.FC = () => {
     const loadRequests = async () => {
         setIsLoading(true);
         try {
-            const res = await api.get('/ventas');
+            const res = await api.get(`/ventas?t=${Date.now()}`);
             // Filtrar solo los apartados pendientes
             const pendientes = res.data.filter((v: any) => v.estado === 'apartado');
             setRequests(pendientes);

@@ -21,11 +21,12 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
 
     const loadData = async () => {
         try {
+            const ts = Date.now();
             const [cliRes, ventRes, prodRes, abonRes] = await Promise.all([
-                api.get('/clientes'),
-                api.get('/ventas'),
-                api.get('/productos'),
-                api.get(`/abonos?clienteId=${cliente.id}`)
+                api.get(`/clientes?t=${ts}`),
+                api.get(`/ventas?t=${ts}`),
+                api.get(`/productos?t=${ts}`),
+                api.get(`/abonos?clienteId=${cliente.id}&t=${ts}`)
             ]);
 
             const updatedClient = cliRes.data.find((c: Cliente) => c.id === cliente.id);

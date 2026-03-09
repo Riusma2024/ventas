@@ -27,7 +27,7 @@ export const syncClientDebtWithVerifiedPayments = async (clienteId: number | str
  */
 export const syncAllDebts = async () => {
     try {
-        const res = await api.get('/clientes');
+        const res = await api.get(`/clientes?t=${Date.now()}`);
         for (const client of res.data) {
             if (client.id) await syncClientDebt(client.id);
         }

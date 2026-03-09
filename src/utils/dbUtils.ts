@@ -4,27 +4,34 @@ import { api } from '../config/api';
  * Recalculates the total debt for a specific client based on their unpaid sales.
  * This ensures the deudaTotal field is always in sync with actual records.
  */
-export const syncClientDebt = async (clienteId: number) => {
+export const syncClientDebt = async (clienteId: number | string) => {
     try {
+        const timestamp = Date.now();
         const [ventasRes, abonosRes] = await Promise.all([
-            api.get('/ventas'),
-            api.get(`/abonos?clienteId=${clienteId}`)
+            api.get(`/ventas?t=${timestamp}`),
+            api.get(`/abonos?clienteId=${clienteId}&t=${timestamp}`)
         ]);
 
-        // Solo sumar deudas de ventas reales (ignoramos cancelados o apartados pendientes)
-        const ventasParams = ventasRes.data.filter((v: any) =>
-            v.clienteId === clienteId && v.estado !== 'cancelado' && v.estado !== 'apartado'
-        );
-        const abonosParams = abonosRes.data;
+        const numClienteId = Number(clienteId);
 
-        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta), 0);
+        // Solo sumar deudas de ventas reales (ignoramos cancelados o apartados pendientes)
+        const ventasParams = ventasRes.data.filter((v: any) => {
+            const isSameClient = Number(v.clienteId) === numClienteId;
+            const state = String(v.estado || '').toLowerCase().trim();
+            const isValidState = state !== 'cancelado' && state !== 'apartado';
+            return isSameClient && isValidState;
+        });
+
+        const abonosParams = abonosRes.data.filter((a: any) => Number(a.clienteId) === numClienteId);
+
+        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta || 0), 0);
         const totalAbonosVerificados = abonosParams
-            .filter((a: any) => a.verificado)
-            .reduce((acc: any, a: any) => acc + Number(a.monto), 0);
+            .filter((a: any) => a.verificado === true || String(a.verificado) === '1' || String(a.verificado).toLowerCase() === 'true')
+            .reduce((acc: any, a: any) => acc + Number(a.monto || 0), 0);
 
         const newDebt = Math.max(0, totalVentas - totalAbonosVerificados);
 
-        await api.put(`/clientes/${clienteId}`, { deudaTotal: newDebt });
+        await api.put(`/clientes/${numClienteId}`, { deudaTotal: newDebt });
         return newDebt;
     } catch (e) {
         console.error('Error syncing debt', e);
@@ -50,30 +57,6 @@ export const syncAllDebts = async () => {
  * Recalculates a client's debt based on sales minus VERIFIED payments only.
  * This is the correct way to calculate debt when payments need verification.
  */
-export const syncClientDebtWithVerifiedPayments = async (clienteId: number) => {
-    try {
-        const [ventasRes, abonosRes] = await Promise.all([
-            api.get('/ventas'),
-            api.get(`/abonos?clienteId=${clienteId}`)
-        ]);
-
-        // Filtrar apartados y cancelados
-        const ventasParams = ventasRes.data.filter((v: any) =>
-            v.clienteId === clienteId && v.estado !== 'cancelado' && v.estado !== 'apartado'
-        );
-        const abonosParams = abonosRes.data;
-
-        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta), 0);
-        const totalAbonosVerificados = abonosParams
-            .filter((a: any) => a.verificado)
-            .reduce((acc: any, a: any) => acc + Number(a.monto), 0);
-
-        const newDebt = Math.max(0, totalVentas - totalAbonosVerificados);
-
-        await api.put(`/clientes/${clienteId}`, { deudaTotal: newDebt });
-        return newDebt;
-    } catch (e) {
-        console.error('Error syncing verified debt', e);
-        return 0;
-    }
+export const syncClientDebtWithVerifiedPayments = async (clienteId: number | string) => {
+    return await syncClientDebt(clienteId);
 };

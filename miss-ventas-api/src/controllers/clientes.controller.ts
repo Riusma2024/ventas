@@ -20,6 +20,37 @@ export const getClientes = async (req: AuthRequest, res: Response): Promise<void
     }
 };
 
+// [Gestionador] Sincronizar Deuda Directamente
+export const syncClientDebtBackend = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const tenant_id = req.user?.tenant_id;
+
+        const [ventasRows] = await db.query<any[]>(
+            `SELECT COALESCE(SUM(precioVenta), 0) as totalVentas 
+             FROM ventas WHERE clienteId = ? AND tenant_id = ? AND estado NOT IN ('apartado', 'cancelado')`,
+            [id, tenant_id]
+        );
+
+        const [abonosRows] = await db.query<any[]>(
+            `SELECT COALESCE(SUM(monto), 0) as totalAbonos 
+             FROM abonos WHERE clienteId = ? AND tenant_id = ? AND verificado = 1`,
+            [id, tenant_id]
+        );
+
+        const totalVentas = Number(ventasRows[0].totalVentas || 0);
+        const totalAbonos = Number(abonosRows[0].totalAbonos || 0);
+        const nuevaDeuda = Math.max(0, totalVentas - totalAbonos);
+
+        await db.query(`UPDATE clientes_app SET deudaTotal = ? WHERE id = ? AND tenant_id = ?`, [nuevaDeuda, id, tenant_id]);
+
+        res.json({ mensaje: 'Deuda sincronizada en DB', nuevaDeuda, totalVentas, totalAbonos });
+    } catch (error) {
+        console.error('Error sincronizando deuda backend:', error);
+        res.status(500).json({ error: 'Error interno sincronizando deuda' });
+    }
+};
+
 // [Gestionador] Crear Cliente
 export const createCliente = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -55,7 +86,6 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
         const tenant_id = req.user?.tenant_id;
         const { nombre, apodo, whatsapp, facebook, otro, deudaTotal, foto, visto } = req.body;
 
-        // Recuperar el cliente actual primero
         const [currentClientRows] = await db.query<any[]>('SELECT * FROM clientes_app WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
 
         if (currentClientRows.length === 0) {
@@ -65,7 +95,6 @@ export const updateCliente = async (req: AuthRequest, res: Response): Promise<vo
 
         const currentClient = currentClientRows[0];
 
-        // Construir valores finales aplicando valores actuales si el req.body no los incluye
         const finalNombre = nombre !== undefined ? nombre : currentClient.nombre;
         const finalApodo = apodo !== undefined ? apodo : currentClient.apodo;
         const finalWhatsapp = whatsapp !== undefined ? whatsapp : currentClient.whatsapp;

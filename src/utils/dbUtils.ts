@@ -1,46 +1,29 @@
 import { api } from '../config/api';
 
 /**
- * Recalculates the total debt for a specific client based on their unpaid sales.
- * This ensures the deudaTotal field is always in sync with actual records.
+ * Recalcula la deuda total de un cliente basándose ÚNICAMENTE en ventas autorizadas/entregadas y abonos verificados.
+ * Esto asegura que la base de datos siempre refleje la información real, ignorando apartados o pre-ventas y evitando 
+ * errores de sincronización o de caché del frontend.
  */
 export const syncClientDebt = async (clienteId: number | string) => {
     try {
-        const timestamp = Date.now();
-        const [ventasRes, abonosRes] = await Promise.all([
-            api.get(`/ventas?t=${timestamp}`),
-            api.get(`/abonos?clienteId=${clienteId}&t=${timestamp}`)
-        ]);
-
-        const numClienteId = Number(clienteId);
-
-        // Solo sumar deudas de ventas reales (ignoramos cancelados o apartados pendientes)
-        const ventasParams = ventasRes.data.filter((v: any) => {
-            const isSameClient = Number(v.clienteId) === numClienteId;
-            const state = String(v.estado || '').toLowerCase().trim();
-            const isValidState = state !== 'cancelado' && state !== 'apartado';
-            return isSameClient && isValidState;
-        });
-
-        const abonosParams = abonosRes.data.filter((a: any) => Number(a.clienteId) === numClienteId);
-
-        const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta || 0), 0);
-        const totalAbonosVerificados = abonosParams
-            .filter((a: any) => a.verificado === true || String(a.verificado) === '1' || String(a.verificado).toLowerCase() === 'true')
-            .reduce((acc: any, a: any) => acc + Number(a.monto || 0), 0);
-
-        const newDebt = Math.max(0, totalVentas - totalAbonosVerificados);
-
-        await api.put(`/clientes/${numClienteId}`, { deudaTotal: newDebt });
-        return newDebt;
+        const res = await api.post(`/clientes/${clienteId}/sync-debt`);
+        return res.data.nuevaDeuda;
     } catch (e) {
-        console.error('Error syncing debt', e);
+        console.error('Error syncing debt in backend', e);
         return 0;
     }
 };
 
 /**
- * Recalculates debt for ALL clients.
+ * Función de conveniencia que sincroniza explícitamente usando la función mejorada unificada.
+ */
+export const syncClientDebtWithVerifiedPayments = async (clienteId: number | string) => {
+    return await syncClientDebt(clienteId);
+};
+
+/**
+ * Sincroniza la deuda de todos los clientes
  */
 export const syncAllDebts = async () => {
     try {
@@ -51,12 +34,4 @@ export const syncAllDebts = async () => {
     } catch (e) {
         console.error('Error syncing all debts', e);
     }
-};
-
-/**
- * Recalculates a client's debt based on sales minus VERIFIED payments only.
- * This is the correct way to calculate debt when payments need verification.
- */
-export const syncClientDebtWithVerifiedPayments = async (clienteId: number | string) => {
-    return await syncClientDebt(clienteId);
 };

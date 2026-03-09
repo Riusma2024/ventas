@@ -1,15 +1,14 @@
 import { Router } from 'express';
-import { getClientes, createCliente, updateCliente, deleteCliente } from '../controllers/clientes.controller';
+import { getClientes, createCliente, updateCliente, deleteCliente, syncClientDebtBackend } from '../controllers/clientes.controller';
 import { verifyToken, requireRol } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Todas las acciones sobre el catálogo de clientes requieren ser al menos 'gestionador'
-router.use(verifyToken, requireRol(['gestionador', 'superadmin']));
-
-router.get('/', getClientes);
-router.post('/', createCliente);
-router.put('/:id', updateCliente);
-router.delete('/:id', deleteCliente);
+// [Gestionadores] Todos los accesos de clientes son para gestionadores (o superadmins)
+router.get('/', verifyToken, requireRol(['gestionador', 'superadmin']), getClientes);
+router.post('/', verifyToken, requireRol(['gestionador', 'superadmin']), createCliente);
+router.put('/:id', verifyToken, requireRol(['gestionador', 'superadmin']), updateCliente);
+router.delete('/:id', verifyToken, requireRol(['gestionador', 'superadmin']), deleteCliente);
+router.post('/:id/sync-debt', verifyToken, requireRol(['gestionador', 'superadmin']), syncClientDebtBackend);
 
 export default router;

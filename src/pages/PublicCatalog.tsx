@@ -500,7 +500,7 @@ export const PublicCatalog: React.FC = () => {
             {isProfileModalOpen && clienteAuth && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
                     <div className="bg-white rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 bg-slate-50 rounded-full transition-colors z-10"><X size={20} /></button>
+                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2.5 bg-slate-900 text-white rounded-2xl shadow-lg hover:scale-110 active:scale-95 transition-all z-10"><X size={24} strokeWidth={3} /></button>
 
                         {/* Header Personal */}
                         <div className="text-center pt-4 mb-6 sticky top-0 bg-white">
@@ -598,9 +598,9 @@ export const PublicCatalog: React.FC = () => {
                                     setClienteWhatsapp('');
                                     setIsProfileModalOpen(false);
                                 }}
-                                className="w-full py-4 text-red-500 font-black uppercase tracking-wider text-[10px] hover:bg-red-50 rounded-2xl transition-all"
+                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-wider text-xs shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
                             >
-                                Cerrar Sesión
+                                Cerrar Sesión / No soy {clienteAuth.nombre.split(' ')[0]}
                             </button>
                         </div>
                     </div>

@@ -18,9 +18,11 @@ export const syncClientDebt = async (clienteId: number) => {
         const abonosParams = abonosRes.data;
 
         const totalVentas = ventasParams.reduce((acc: any, v: any) => acc + Number(v.precioVenta), 0);
-        const totalAbonos = abonosParams.reduce((acc: any, a: any) => acc + Number(a.monto), 0);
+        const totalAbonosVerificados = abonosParams
+            .filter((a: any) => a.verificado)
+            .reduce((acc: any, a: any) => acc + Number(a.monto), 0);
 
-        const newDebt = Math.max(0, totalVentas - totalAbonos);
+        const newDebt = Math.max(0, totalVentas - totalAbonosVerificados);
 
         await api.put(`/clientes/${clienteId}`, { deudaTotal: newDebt });
         return newDebt;

@@ -152,7 +152,7 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                                                 )}
                                             </div>
                                             <p className={`font-black text-base tracking-tighter ${abono.verificado ? 'text-green-700' : 'text-amber-700'
-                                                }`}>+${Number(abono.monto || 0).toFixed(2)}</p>
+                                                }`}>+${Number(abono.monto || 0).toFixed(2)} <span className="text-[10px] opacity-60 ml-1">({abono.metodoPago || 'Efectivo'})</span></p>
                                             {abono.evidencia && (
                                                 <div className="flex items-center gap-1 mt-1">
                                                     <ImageIcon size={10} className={abono.verificado ? 'text-green-600' : 'text-amber-600'} />

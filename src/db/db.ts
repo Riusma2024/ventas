@@ -40,6 +40,7 @@ export interface Abono {
     id?: number;
     clienteId: number;
     monto: number;
+    metodoPago?: string;
     fecha: Date;
     evidencia?: string;
     verificado: boolean;

@@ -34,6 +34,28 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
             if (cRows.length > 0) clienteData = cRows[0];
         }
 
+        // Si tenemos un cliente identificado, traer su historial de ventas y abonos
+        if (clienteData) {
+            // Historial de Ventas (Adquisiciones)
+            const [vRows] = await db.query<any[]>(
+                `SELECT v.id, v.precioVenta, v.fecha, v.estado, v.pagado, p.nombre as productoNombre 
+                 FROM ventas v 
+                 JOIN productos p ON v.productoId = p.id 
+                 WHERE v.clienteId = ? AND v.tenant_id = ?
+                 ORDER BY v.fecha DESC`,
+                [clienteData.id, tenant_id]
+            );
+
+            // Historial de Abonos (Pagos)
+            const [aRows] = await db.query<any[]>(
+                'SELECT id, monto, fecha, metodoPago, nota FROM abonos WHERE clienteId = ? AND tenant_id = ? ORDER BY fecha DESC',
+                [clienteData.id, tenant_id]
+            );
+
+            clienteData.ventas = vRows;
+            clienteData.abonos = aRows;
+        }
+
         // Obtener nombre del gestionador para personalizar la vista
         const [tenantRows] = await db.query<any[]>(
             'SELECT nombre FROM usuarios WHERE id = ? AND rol = "gestionador"',

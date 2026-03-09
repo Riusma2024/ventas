@@ -8,7 +8,7 @@ import { AddProductForm } from '../components/AddProductForm';
 import { AddClientForm } from '../components/AddClientForm';
 import { SellProductForm } from '../components/SellProductForm';
 import { TandaManager } from '../components/TandaManager';
-import { Plus, TrendingUp, Wallet, AlertCircle, CheckCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2, ShoppingCart } from 'lucide-react';
+import { Plus, TrendingUp, Wallet, AlertCircle, CheckCircle, Package, Users, UserPlus, Search, BarChart3, Activity, ZoomIn, X, RefreshCw, Edit, Share2, ShoppingCart, Copy } from 'lucide-react';
 import { ReportsView } from '../components/ReportsView';
 import { PendingRequestsManager } from '../components/PendingRequestsManager';
 import { CartModal, type CartItem } from '../components/CartModal';
@@ -277,10 +277,22 @@ const Dashboard: React.FC = () => {
                                         <h4 className="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2 min-h-[1.5rem] group-hover:text-primary-500 transition-colors uppercase tracking-tight">{prod.nombre}</h4>
                                         <div className="flex justify-between items-center">
                                             <p className="text-base font-black text-slate-900 tracking-tighter">${prod.precioSugerido}</p>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-1.5">
+                                                <button
+                                                    onClick={() => {
+                                                        const { id, ...duplicableData } = prod;
+                                                        setEditingProduct(duplicableData as any);
+                                                        setIsAddProductOpen(true);
+                                                    }}
+                                                    className="bg-accent/10 text-accent p-2 rounded-xl active:scale-90 transition-all hover:bg-accent/20"
+                                                    title="Crear variante (Duplicar)"
+                                                >
+                                                    <Copy size={16} strokeWidth={3} />
+                                                </button>
                                                 <button
                                                     onClick={() => setEditingProduct(prod)}
-                                                    className="bg-slate-100 text-slate-500 p-2.5 rounded-xl active:scale-90 transition-all hover:bg-slate-200"
+                                                    className="bg-slate-100 text-slate-500 p-2 rounded-xl active:scale-90 transition-all hover:bg-slate-200"
+                                                    title="Editar"
                                                 >
                                                     <Edit size={16} strokeWidth={3} />
                                                 </button>

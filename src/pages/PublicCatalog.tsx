@@ -43,6 +43,14 @@ export const PublicCatalog: React.FC = () => {
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
     const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
 
+    // Profile tabs
+    const [profileTab, setProfileTab] = useState<'acuerdos' | 'abonos'>('acuerdos');
+
+    // Login security state
+    const [loginStep, setLoginStep] = useState<'id' | 'confirm' | 'verify'>('id');
+    const [pendingClient, setPendingClient] = useState<any>(null);
+    const [phoneConfirmation, setPhoneConfirmation] = useState('');
+
     // Memoria de dispositivo
     const [rememberedUser, setRememberedUser] = useState<{ nombre: string, whatsapp: string } | null>(null);
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -94,21 +102,41 @@ export const PublicCatalog: React.FC = () => {
         try {
             const res = await api.get(`/public/catalogo/${tenant_id}?codigo=${loginCode}`);
             if (res.data.cliente) {
-                const c = res.data.cliente;
-                setClienteAuth(c);
-                localStorage.setItem('missventas_cliente_id', c.id.toString());
-                localStorage.setItem('missventas_cliente_nombre', c.nombre);
-                localStorage.setItem('missventas_cliente_whatsapp', c.whatsapp);
-                setClienteNombre(c.nombre);
-                setClienteWhatsapp(c.whatsapp);
-                setIsLoginModalOpen(false);
-                setLoginCode('');
-                setSuccessMessage(`¡Bienvenido de nuevo, ${c.nombre.split(' ')[0]}!`);
+                setPendingClient(res.data.cliente);
+                setLoginStep('confirm');
+                setLoginError(null);
             } else {
                 setLoginError('ID de cliente no encontrado');
             }
         } catch (err: any) {
             setLoginError('Error al buscar el ID');
+        }
+    };
+
+    const handleConfirmPhone = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!pendingClient) return;
+
+        // Limpiar los números de ambos lados para comparar
+        const cleanPhone = pendingClient.whatsapp.replace(/\D/g, '');
+        const lastFour = cleanPhone.slice(-4);
+
+        if (phoneConfirmation === lastFour) {
+            const c = pendingClient;
+            setClienteAuth(c);
+            localStorage.setItem('missventas_cliente_id', c.id.toString());
+            localStorage.setItem('missventas_cliente_nombre', c.nombre);
+            localStorage.setItem('missventas_cliente_whatsapp', c.whatsapp);
+            setClienteNombre(c.nombre);
+            setClienteWhatsapp(c.whatsapp);
+            setIsLoginModalOpen(false);
+            setLoginCode('');
+            setPhoneConfirmation('');
+            setLoginStep('id');
+            setPendingClient(null);
+            setSuccessMessage(`¡Bienvenido de nuevo, ${c.nombre}!`);
+        } else {
+            setLoginError('Los últimos 4 dígitos no coinciden');
         }
     };
 
@@ -471,17 +499,94 @@ export const PublicCatalog: React.FC = () => {
 
             {isProfileModalOpen && clienteAuth && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center relative overflow-hidden">
-                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"><X size={20} /></button>
-                        <div className="w-20 h-20 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 font-black text-3xl">{clienteAuth.nombre[0].toUpperCase()}</div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-1">{clienteAuth.nombre}</h2>
-                        <span className="inline-block bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">ID: {clienteAuth.codigo_cliente}</span>
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-left mb-6">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tu Saldo Pendiente</p>
-                            <p className={`text-2xl font-black tracking-tighter ${Number(clienteAuth.deudaTotal) > 0 ? 'text-red-500' : 'text-green-500'}`}>${Number(clienteAuth.deudaTotal).toFixed(2)}</p>
+                    <div className="bg-white rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 bg-slate-50 rounded-full transition-colors z-10"><X size={20} /></button>
+
+                        {/* Header Personal */}
+                        <div className="text-center pt-4 mb-6 sticky top-0 bg-white">
+                            <div className="w-20 h-20 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 font-black text-3xl shadow-xl">
+                                {clienteAuth.nombre[0].toUpperCase()}
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-900 mb-1 tracking-tighter">{clienteAuth.nombre}</h2>
+                            <span className="inline-block bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">ID: {clienteAuth.codigo_cliente}</span>
+
+                            <div className="grid grid-cols-2 gap-4 mb-2">
+                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-left">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">WhatsApp</p>
+                                    <p className="text-sm font-black text-slate-700 tracking-tight line-clamp-1">{clienteAuth.whatsapp}</p>
+                                </div>
+                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-left">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Deuda</p>
+                                    <p className={`text-lg font-black tracking-tighter ${Number(clienteAuth.deudaTotal) > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                        ${Number(clienteAuth.deudaTotal).toFixed(0)}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="space-y-3">
-                            <button onClick={() => setIsProfileModalOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all">Cerrar</button>
+
+                        {/* Tabs de Historial */}
+                        <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-4 gap-2">
+                            <button
+                                onClick={() => setProfileTab('acuerdos')}
+                                className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${profileTab === 'acuerdos' ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200' : 'text-slate-500 hover:bg-slate-200/50'}`}
+                            >
+                                Acuerdos ({clienteAuth.ventas?.length || 0})
+                            </button>
+                            <button
+                                onClick={() => setProfileTab('abonos')}
+                                className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${profileTab === 'abonos' ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200' : 'text-slate-500 hover:bg-slate-200/50'}`}
+                            >
+                                Abonos ({clienteAuth.abonos?.length || 0})
+                            </button>
+                        </div>
+
+                        {/* Listado Scrollable */}
+                        <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar mb-6 min-h-0">
+                            {profileTab === 'acuerdos' ? (
+                                <>
+                                    {!clienteAuth.ventas || clienteAuth.ventas.length === 0 ? (
+                                        <p className="text-center py-10 text-slate-400 font-medium italic">Sin adquisiciones aún</p>
+                                    ) : (
+                                        clienteAuth.ventas.map((v: any) => (
+                                            <div key={v.id} className="bg-white border border-slate-100 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-sm font-black text-slate-800 tracking-tight leading-tight uppercase line-clamp-1">{v.productoNombre}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold">{new Date(v.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end gap-1">
+                                                    <p className="font-black text-slate-900 tracking-tighter">$ {v.precioVenta}</p>
+                                                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md ${v.pagado ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                                                        {v.pagado ? 'SALDADO' : (v.estado === 'apartado' ? 'PENDIENTE' : 'A CUENTA')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {!clienteAuth.abonos || clienteAuth.abonos.length === 0 ? (
+                                        <p className="text-center py-10 text-slate-400 font-medium italic">Sin abonos registrados</p>
+                                    ) : (
+                                        clienteAuth.abonos.map((a: any) => (
+                                            <div key={a.id} className="bg-green-50/30 border border-green-100 p-4 rounded-2xl flex justify-between items-center">
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-sm font-black text-green-700 tracking-tight">Abono {a.metodoPago !== 'Efectivo' ? `(${a.metodoPago})` : ''}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold">{new Date(a.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-black text-green-600 text-lg tracking-tighter">+$ {a.monto}</p>
+                                                    {a.nota && <p className="text-[8px] italic text-slate-400 max-w-[100px] truncate">{a.nota}</p>}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Botón Cerrar Sesión */}
+                        <div className="space-y-3 pt-4 border-t border-slate-50 sticky bottom-0 bg-white bg-opacity-95">
                             <button
                                 onClick={() => {
                                     localStorage.removeItem('missventas_cliente_id');
@@ -493,9 +598,9 @@ export const PublicCatalog: React.FC = () => {
                                     setClienteWhatsapp('');
                                     setIsProfileModalOpen(false);
                                 }}
-                                className="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase tracking-wider text-[10px] active:scale-95 transition-all"
+                                className="w-full py-4 text-red-500 font-black uppercase tracking-wider text-[10px] hover:bg-red-50 rounded-2xl transition-all"
                             >
-                                Cerrar Sesión / Soy otra persona
+                                Cerrar Sesión
                             </button>
                         </div>
                     </div>
@@ -504,36 +609,78 @@ export const PublicCatalog: React.FC = () => {
 
             {isLoginModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                    <form onSubmit={handleLoginWithCode} className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center relative animate-fade-in">
-                        <button type="button" onClick={() => setIsLoginModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center relative animate-fade-in">
+                        <button type="button" onClick={() => { setIsLoginModalOpen(false); setLoginStep('id'); setPendingClient(null); }} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"><X size={20} /></button>
+
                         <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                             <User size={32} />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">Accede a tu cuenta</h2>
-                        <p className="text-slate-500 text-sm mb-8">Ingresa tu código de cliente para ver tus movimientos y deudas.</p>
 
-                        <div className="space-y-4 text-left">
-                            <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Código de Cliente</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Ej: C-6"
-                                    value={loginCode}
-                                    onChange={(e) => setLoginCode(e.target.value.toUpperCase())}
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mt-1 text-center font-black text-lg focus:border-primary-500 outline-none transition-all"
-                                />
+                        {loginStep === 'id' && (
+                            <form onSubmit={handleLoginWithCode} className="space-y-4">
+                                <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">Accede a tu cuenta</h2>
+                                <p className="text-slate-500 text-sm mb-8">Ingresa tu código de cliente para comenzar.</p>
+
+                                <div className="text-left">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Código de Cliente</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Ej: C-6"
+                                        value={loginCode}
+                                        onChange={(e) => setLoginCode(e.target.value.toUpperCase())}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mt-1 text-center font-black text-lg focus:border-primary-500 outline-none transition-all"
+                                    />
+                                </div>
+
+                                {loginError && <p className="text-red-500 text-[10px] font-bold italic">{loginError}</p>}
+
+                                <button type="submit" className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-primary-500/20 active:scale-95 transition-all">
+                                    Siguiente
+                                </button>
+                            </form>
+                        )}
+
+                        {loginStep === 'confirm' && pendingClient && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">¿Eres tú?</h2>
+                                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                                    <p className="text-xl font-black text-slate-800 leading-tight">{pendingClient.nombre}</p>
+                                    <p className="text-xs text-slate-400 font-bold uppercase mt-1">ID: {pendingClient.codigo_cliente}</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setLoginStep('id')} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm">No, regresar</button>
+                                    <button onClick={() => setLoginStep('verify')} className="flex-1 py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-lg shadow-primary-500/20">Sí, soy yo</button>
+                                </div>
                             </div>
+                        )}
 
-                            {loginError && (
-                                <p className="text-red-500 text-[10px] font-bold text-center italic">{loginError}</p>
-                            )}
+                        {loginStep === 'verify' && pendingClient && (
+                            <form onSubmit={handleConfirmPhone} className="space-y-6">
+                                <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">Verificación</h2>
+                                <p className="text-slate-500 text-sm">Por seguridad, confirma los <b>últimos 4 dígitos</b> de tu número registrado:</p>
 
-                            <button type="submit" className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-primary-500/20 active:scale-95 transition-all">
-                                Consultar
-                            </button>
-                        </div>
-                    </form>
+                                <div className="text-left">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Últimos 4 dígitos</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        maxLength={4}
+                                        placeholder="****"
+                                        value={phoneConfirmation}
+                                        onChange={(e) => setPhoneConfirmation(e.target.value.replace(/\D/g, ''))}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mt-1 text-center font-black text-2xl tracking-[0.5em] focus:border-primary-500 outline-none transition-all"
+                                    />
+                                </div>
+
+                                {loginError && <p className="text-red-500 text-[10px] font-bold italic">{loginError}</p>}
+
+                                <button type="submit" className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-primary-500/20 active:scale-95 transition-all">
+                                    Acceder ahora
+                                </button>
+                            </form>
+                        )}
+                    </div>
                 </div>
             )}
 

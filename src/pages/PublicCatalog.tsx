@@ -12,6 +12,7 @@ interface Producto {
     categoria: string | null;
     stock: number;
     descripcion: string | null;
+    imagenes: string[];
 }
 
 interface CartItem extends Producto {
@@ -40,6 +41,7 @@ export const PublicCatalog: React.FC = () => {
     const [loginCode, setLoginCode] = useState('');
     const [loginError, setLoginError] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
+    const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
 
     // Memoria de dispositivo
     const [rememberedUser, setRememberedUser] = useState<{ nombre: string, whatsapp: string } | null>(null);
@@ -53,7 +55,11 @@ export const PublicCatalog: React.FC = () => {
                 : `/public/catalogo/${tenant_id}`;
             const res = await api.get(url);
             setNegocio(res.data.negocio);
-            setProductos(res.data.productos);
+            const parsedProducts = res.data.productos.map((p: any) => ({
+                ...p,
+                imagenes: p.imagenes ? (typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : p.imagenes) : []
+            }));
+            setProductos(parsedProducts);
             if (res.data.cliente) {
                 setClienteAuth(res.data.cliente);
             } else {
@@ -367,10 +373,13 @@ export const PublicCatalog: React.FC = () => {
                         <div key={prod.id} className="bg-white rounded-3xl p-4 border border-slate-100 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-all group overflow-hidden">
                             <div
                                 className="w-full aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center cursor-zoom-in group-hover:shadow-lg transition-all"
-                                onClick={() => setSelectedProduct(prod)}
+                                onClick={() => {
+                                    setSelectedProduct(prod);
+                                    setActiveModalImage(prod.foto);
+                                }}
                             >
                                 {prod.foto ? (
-                                    <img src={prod.foto} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <img src={prod.foto} alt={prod.nombre} className="w-full h-full object-contain transition-transform duration-700" />
                                 ) : (
                                     <ShoppingBag size={40} className="text-slate-200" />
                                 )}
@@ -540,18 +549,35 @@ export const PublicCatalog: React.FC = () => {
                         >
                             <button
                                 onClick={() => setSelectedProduct(null)}
-                                className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md text-slate-900 rounded-3xl z-10 shadow-lg active:scale-95 transition-all"
+                                className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md text-slate-900 rounded-3xl z-20 shadow-lg active:scale-95 transition-all"
                             >
                                 <X size={24} strokeWidth={3} />
                             </button>
 
                             <div className="overflow-y-auto max-h-[90vh]">
                                 <div className="relative w-full aspect-square bg-slate-100">
-                                    {selectedProduct.foto ? (
-                                        <img src={selectedProduct.foto} className="w-full h-full object-cover" />
+                                    {activeModalImage ? (
+                                        <img src={activeModalImage} className="w-full h-full object-contain" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-300">
                                             <ShoppingBag size={80} />
+                                        </div>
+                                    )}
+
+                                    {/* Gallery overlay if multiple images */}
+                                    {selectedProduct.imagenes && selectedProduct.imagenes.length > 1 && (
+                                        <div className="absolute bottom-4 left-0 right-0 px-4">
+                                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-2">
+                                                {selectedProduct.imagenes.map((img, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => setActiveModalImage(img)}
+                                                        className={`w-16 h-16 rounded-xl border-2 shadow-lg overflow-hidden flex-shrink-0 active:scale-90 transition-all ${activeModalImage === img ? 'border-primary-500 scale-105 z-10' : 'border-white'}`}
+                                                    >
+                                                        <img src={img} className="w-full h-full object-contain" />
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

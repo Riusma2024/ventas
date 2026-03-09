@@ -88,7 +88,11 @@ const Dashboard: React.FC = () => {
                 api.get(`/ventas?t=${ts}`)
             ]);
 
-            setProductos(prodRes.data);
+            const productsData = prodRes.data.map((p: any) => ({
+                ...p,
+                imagenes: p.imagenes ? (typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : p.imagenes) : []
+            }));
+            setProductos(productsData);
             setClientes(cliRes.data);
 
             const ventasData = ventRes.data.map((v: any) => ({
@@ -256,7 +260,7 @@ const Dashboard: React.FC = () => {
                                         onClick={() => prod.foto && setZoomedImage(prod.foto)}
                                     >
                                         {prod.foto ? (
-                                            <img src={prod.foto} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            <img src={prod.foto} className="w-full h-full object-contain transition-transform duration-500" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-200">
                                                 <Package size={32} />

@@ -14,7 +14,7 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
 
         // Obtener solo productos con stock > 0
         const [rows] = await db.query<any[]>(
-            'SELECT id, nombre, precioSugerido, foto, stock, categoria, descripcion FROM productos WHERE tenant_id = ? AND stock > 0',
+            'SELECT id, nombre, precioSugerido, foto, stock, categoria, descripcion, imagenes FROM productos WHERE tenant_id = ? AND stock > 0',
             [tenant_id]
         );
 

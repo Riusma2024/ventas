@@ -111,7 +111,7 @@ export const CartModal: React.FC<CartModalProps> = ({ items, onClose, onRemoveIt
                             {items.map(item => (
                                 <div key={item.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
                                     <div className="w-12 h-12 bg-white rounded-xl overflow-hidden flex-shrink-0">
-                                        {item.producto.foto ? <img src={item.producto.foto} className="w-full h-full object-cover" /> : <ShoppingCart size={16} className="m-auto opacity-20" />}
+                                        {item.producto.foto ? <img src={item.producto.foto} className="w-full h-full object-contain" /> : <ShoppingCart size={16} className="m-auto opacity-20" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="text-xs font-black uppercase truncate text-slate-900">{item.producto.nombre}</h4>

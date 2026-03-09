@@ -50,7 +50,7 @@ export const SaleDetail: React.FC<SaleDetailProps> = ({ venta, onClose }) => {
                     {/* Product & Client Info */}
                     <div className="flex items-center gap-4 bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100/50">
                         <div className="w-20 h-20 bg-white rounded-3xl overflow-hidden shadow-sm border border-white">
-                            {producto.foto && <img src={producto.foto} className="w-full h-full object-cover" />}
+                            {producto.foto && <img src={producto.foto} className="w-full h-full object-contain" />}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Entregado a</p>

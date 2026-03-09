@@ -5,10 +5,11 @@ export interface Producto {
     nombre: string;
     costo: number;
     precioSugerido: number;
-    foto?: string; // Base64 o Blob URL
+    foto?: string; // Imagen principal (Base64 o Blob URL)
     stock: number;
     categoria?: string;
     descripcion?: string;
+    imagenes?: string[]; // Galería de imágenes
 }
 
 export interface Venta {

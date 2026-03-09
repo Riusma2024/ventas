@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Camera, Save, X, Maximize2 } from 'lucide-react';
+import { Camera, Save, X, Trash2, Star, Check, Plus } from 'lucide-react';
 import { type Producto } from '../db/db';
 import { api } from '../config/api';
 import { resizeImage } from '../utils/imageUtils';
+import { CropModal } from './CropModal';
+import { Crop } from 'lucide-react';
 
 interface AddProductFormProps {
     onClose: () => void;
@@ -16,18 +18,60 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
     const [precio, setPrecio] = useState(producto?.precioSugerido.toString() || '');
     const [stock, setStock] = useState(producto?.stock.toString() || '1');
     const [foto, setFoto] = useState<string | undefined>(producto?.foto);
+    const [imagenes, setImagenes] = useState<string[]>(producto?.imagenes || (producto?.foto ? [producto.foto] : []));
     const [descripcion, setDescripcion] = useState(producto?.descripcion || '');
+    const [imageToCrop, setImageToCrop] = useState<{ src: string, index: number | null } | null>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
+        const files = e.target.files;
+        if (files && files.length > 0) {
             const reader = new FileReader();
             reader.onloadend = async () => {
                 const resized = await resizeImage(reader.result as string);
-                setFoto(resized);
+                setImageToCrop({ src: resized, index: null });
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(files[0]);
+            // Limpiar input para permitir subir la misma imagen si se borra
+            e.target.value = '';
         }
+    };
+
+    const onCropDone = (croppedImage: string) => {
+        if (imageToCrop) {
+            if (imageToCrop.index !== null) {
+                // Editando una existente
+                const newImages = [...imagenes];
+                const oldImg = newImages[imageToCrop.index];
+                newImages[imageToCrop.index] = croppedImage;
+                setImagenes(newImages);
+                if (foto === oldImg) {
+                    setFoto(croppedImage);
+                }
+            } else {
+                // Nueva imagen
+                const newImages = [...imagenes, croppedImage];
+                setImagenes(newImages);
+                if (!foto) {
+                    setFoto(croppedImage);
+                }
+            }
+        }
+        setImageToCrop(null);
+    };
+
+    const removeImage = (index: number) => {
+        const imgToRemove = imagenes[index];
+        const newImages = imagenes.filter((_, i) => i !== index);
+        setImagenes(newImages);
+
+        // Si la que borramos era la principal, mover la principal a la siguiente disponible
+        if (foto === imgToRemove) {
+            setFoto(newImages.length > 0 ? newImages[0] : undefined);
+        }
+    };
+
+    const setAsMain = (img: string) => {
+        setFoto(img);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +83,8 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                 precioSugerido: Number(precio),
                 stock: Number(stock),
                 foto,
-                descripcion
+                descripcion,
+                imagenes
             };
 
             if (producto?.id) {
@@ -55,7 +100,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20 my-auto">
+            <div className="bg-white w-full max-w-md rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-white/20 my-auto">
                 <div className="flex justify-between items-center px-2">
                     <div>
                         <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
@@ -71,22 +116,79 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Photo Upload */}
-                    <div className="flex justify-center">
-                        <label className="relative w-40 h-40 bg-slate-50 rounded-[2.5rem] border-3 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-primary-400 transition-all duration-500">
-                            {foto ? (
-                                <img src={foto} alt="Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                            ) : (
-                                <>
-                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-300 group-hover:text-primary-500 transition-colors mb-2">
-                                        <Camera size={24} />
+                    {/* Gallery section */}
+                    <div className="space-y-4">
+                        <div className="flex justify-center">
+                            <div className="relative w-full aspect-video bg-slate-50 rounded-[2.5rem] border-3 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden group transition-all duration-500">
+                                {foto ? (
+                                    <>
+                                        <img src={foto} alt="Main" className="w-full h-full object-contain" />
+                                        <div className="absolute inset-0 bg-black/20 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-900">Portada</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-slate-300 flex flex-col items-center">
+                                        <Camera size={48} strokeWidth={1.5} className="mb-2" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Sin Portada</span>
                                     </div>
-                                    <span className="text-[9px] text-slate-400 font-black tracking-widest uppercase">Cargar Imagen</span>
-                                </>
-                            )}
-                            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                        </label>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Thumbnails */}
+                        <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+                            <label className="flex-shrink-0 w-20 h-20 bg-primary-50 border-2 border-dashed border-primary-200 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-primary-100 transition-colors">
+                                <Plus size={24} className="text-primary-400" />
+                                <input type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
+                            </label>
+                            {imagenes.map((img, idx) => (
+                                <div key={idx} className={`relative flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all ${foto === img ? 'border-primary-500 shadow-lg scale-95' : 'border-transparent'}`}>
+                                    <img src={img} className="w-full h-full object-contain" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
+                                        <div className="flex gap-1 justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => setAsMain(img)}
+                                                className="p-1 bg-white text-primary-500 rounded-lg hover:scale-110 transition-transform"
+                                                title="Poner como principal"
+                                            >
+                                                <Star size={12} fill={foto === img ? "currentColor" : "none"} strokeWidth={3} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setImageToCrop({ src: img, index: idx })}
+                                                className="p-1 bg-white text-slate-700 rounded-lg hover:scale-110 transition-transform"
+                                                title="Recortar"
+                                            >
+                                                <Crop size={12} strokeWidth={3} />
+                                            </button>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(idx)}
+                                            className="p-1 bg-white text-red-500 rounded-lg w-full hover:bg-red-50 transition-colors flex items-center justify-center"
+                                        >
+                                            <Trash2 size={12} strokeWidth={3} />
+                                        </button>
+                                    </div>
+                                    {foto === img && (
+                                        <div className="absolute top-1 right-1 bg-primary-500 text-white p-0.5 rounded-full">
+                                            <Check size={10} strokeWidth={4} />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
+
+                    {imageToCrop && (
+                        <CropModal
+                            image={imageToCrop.src}
+                            onClose={() => setImageToCrop(null)}
+                            onDone={onCropDone}
+                        />
+                    )}
 
                     <div className="space-y-4">
                         <div className="space-y-1">
@@ -104,7 +206,7 @@ export const AddProductForm: React.FC<AddProductFormProps> = ({ onClose, onSucce
                         <div className="space-y-1">
                             <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Descripción (Opcional)</label>
                             <textarea
-                                className="input-field min-h-[80px] py-3 resize-none"
+                                className="input-field min-h-[80px] py-3 resize-none text-sm"
                                 placeholder="Añade detalles del producto..."
                                 value={descripcion}
                                 onChange={(e) => setDescripcion(e.target.value)}

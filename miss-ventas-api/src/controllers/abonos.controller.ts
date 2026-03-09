@@ -31,7 +31,7 @@ export const createAbono = async (req: AuthRequest, res: Response): Promise<void
     try {
         const tenant_id = req.user?.tenant_id;
         const rol = req.user?.rol;
-        const { clienteId, monto, evidencia, verificado } = req.body;
+        const { clienteId, monto, metodoPago, evidencia, verificado } = req.body;
 
         if (!clienteId || monto === undefined) {
             res.status(400).json({ error: 'Faltan datos requeridos (clienteId, monto)' });
@@ -42,9 +42,9 @@ export const createAbono = async (req: AuthRequest, res: Response): Promise<void
         const esVerificado = rol === 'cliente' ? false : (verificado || false);
 
         const [result] = await db.query<any>(
-            `INSERT INTO abonos (tenant_id, clienteId, monto, evidencia, fecha, verificado) 
-             VALUES (?, ?, ?, ?, NOW(), ?)`,
-            [tenant_id, clienteId, monto, evidencia || null, esVerificado]
+            `INSERT INTO abonos (tenant_id, clienteId, monto, metodoPago, evidencia, fecha, verificado) 
+             VALUES (?, ?, ?, ?, ?, NOW(), ?)`,
+            [tenant_id, clienteId, monto, metodoPago || 'Efectivo', evidencia || null, esVerificado]
         );
 
         res.status(201).json({

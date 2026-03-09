@@ -48,7 +48,7 @@ export const getPublicCatalog = async (req: Request, res: Response): Promise<voi
 
             // Historial de Abonos (Pagos)
             const [aRows] = await db.query<any[]>(
-                'SELECT id, monto, fecha, evidencia, verificado FROM abonos WHERE clienteId = ? AND tenant_id = ? ORDER BY fecha DESC',
+                'SELECT id, monto, metodoPago, fecha, evidencia, verificado FROM abonos WHERE clienteId = ? AND tenant_id = ? ORDER BY fecha DESC',
                 [clienteData.id, tenant_id]
             );
 

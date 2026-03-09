@@ -11,6 +11,7 @@ interface AddAbonoFormProps {
 
 export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, onSuccess }) => {
     const [monto, setMonto] = useState('');
+    const [metodoPago, setMetodoPago] = useState('Efectivo');
     const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
     const [evidencia, setEvidencia] = useState<string | undefined>();
     const [verificado, setVerificado] = useState(false);
@@ -35,6 +36,7 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
             await api.post('/abonos', {
                 clienteId: cliente.id!,
                 monto: montoNum,
+                metodoPago,
                 fecha: new Date(fecha).toISOString(),
                 evidencia,
                 verificado
@@ -83,6 +85,21 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                                 onChange={(e) => setMonto(e.target.value)}
                             />
                         </div>
+                    </div>
+
+                    {/* Método de Pago */}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Método de Pago</label>
+                        <select
+                            className="input-field w-full cursor-pointer"
+                            value={metodoPago}
+                            onChange={(e) => setMetodoPago(e.target.value)}
+                        >
+                            <option value="Efectivo">💵 Efectivo</option>
+                            <option value="Transferencia">🏦 Transferencia</option>
+                            <option value="Depósito">🏧 Depósito</option>
+                            <option value="Otro">💳 Otro / Tarjeta</option>
+                        </select>
                     </div>
 
                     {/* Fecha */}

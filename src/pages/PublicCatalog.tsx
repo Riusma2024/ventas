@@ -572,7 +572,7 @@ export const PublicCatalog: React.FC = () => {
                                             <div key={a.id} className={`${a.verificado ? 'bg-green-50/30 border-green-100' : 'bg-orange-50/30 border-orange-100'} border p-4 rounded-2xl flex justify-between items-center`}>
                                                 <div className="flex flex-col gap-1">
                                                     <p className={`text-sm font-black tracking-tight ${a.verificado ? 'text-green-700' : 'text-orange-700'}`}>
-                                                        {a.verificado ? 'Abono Verificado' : 'Abono Pendiente'}
+                                                        {a.verificado ? 'Abono Verificado' : 'Abono Pendiente'} {a.metodoPago && `(${a.metodoPago})`}
                                                     </p>
                                                     <p className="text-[10px] text-slate-400 font-bold">{new Date(a.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                                 </div>

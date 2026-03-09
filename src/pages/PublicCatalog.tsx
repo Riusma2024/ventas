@@ -569,14 +569,15 @@ export const PublicCatalog: React.FC = () => {
                                         <p className="text-center py-10 text-slate-400 font-medium italic">Sin abonos registrados</p>
                                     ) : (
                                         clienteAuth.abonos.map((a: any) => (
-                                            <div key={a.id} className="bg-green-50/30 border border-green-100 p-4 rounded-2xl flex justify-between items-center">
+                                            <div key={a.id} className={`${a.verificado ? 'bg-green-50/30 border-green-100' : 'bg-orange-50/30 border-orange-100'} border p-4 rounded-2xl flex justify-between items-center`}>
                                                 <div className="flex flex-col gap-1">
-                                                    <p className="text-sm font-black text-green-700 tracking-tight">Abono {a.metodoPago !== 'Efectivo' ? `(${a.metodoPago})` : ''}</p>
+                                                    <p className={`text-sm font-black tracking-tight ${a.verificado ? 'text-green-700' : 'text-orange-700'}`}>
+                                                        {a.verificado ? 'Abono Verificado' : 'Abono Pendiente'}
+                                                    </p>
                                                     <p className="text-[10px] text-slate-400 font-bold">{new Date(a.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-black text-green-600 text-lg tracking-tighter">+$ {a.monto}</p>
-                                                    {a.nota && <p className="text-[8px] italic text-slate-400 max-w-[100px] truncate">{a.nota}</p>}
+                                                    <p className={`font-black text-lg tracking-tighter ${a.verificado ? 'text-green-600' : 'text-orange-600'}`}>+$ {a.monto}</p>
                                                 </div>
                                             </div>
                                         ))

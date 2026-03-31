@@ -1,5 +1,4 @@
 {
-  "comment": "Force redeploy for missventas and ventas",
   "rewrites": [
     {
       "source": "/api/(.*)",

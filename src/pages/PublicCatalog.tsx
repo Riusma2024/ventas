@@ -505,7 +505,7 @@ export const PublicCatalog: React.FC = () => {
 
             {isProfileModalOpen && clienteAuth && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-white rounded-[2.5rem] p-6 max-md w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
                         <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2.5 bg-slate-900 text-white rounded-2xl shadow-lg hover:scale-110 active:scale-95 transition-all z-10"><X size={24} strokeWidth={3} /></button>
 
                         {/* Header Personal */}
@@ -547,7 +547,7 @@ export const PublicCatalog: React.FC = () => {
                         </div>
 
                         {/* Listado Scrollable */}
-                        <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar mb-6 min-h-0">
+                        <div className="flex-1 overflow-y-auto pr-1 space-y-3 premium-scrollbar mb-6 min-h-0">
                             {profileTab === 'acuerdos' ? (
                                 <>
                                     {!clienteAuth.ventas || clienteAuth.ventas.length === 0 ? (
@@ -751,7 +751,7 @@ export const PublicCatalog: React.FC = () => {
                                 <X size={24} strokeWidth={3} />
                             </button>
 
-                            <div className="overflow-y-auto max-h-[90vh]">
+                            <div className="overflow-y-auto max-h-[90vh] premium-scrollbar">
                                 <div className="relative w-full aspect-square bg-slate-100">
                                     {activeModalImage ? (
                                         <img src={activeModalImage} className="w-full h-full object-contain" />

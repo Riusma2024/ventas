@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { db } from './config/db';
+import { db, initDB } from './config/db';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -14,6 +14,9 @@ import tandasRoutes from './routes/tandas.routes';
 import publicRoutes from './routes/public.routes';
 
 dotenv.config();
+
+// Inicializar DB (Crea tablas faltantes en Vercel)
+initDB().catch(err => console.error('Error in DB Init:', err));
 
 const app = express();
 const PORT = process.env.PORT || 3000;

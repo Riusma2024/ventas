@@ -44,7 +44,12 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
+                if (ctx) {
+                    // Rellenar con fondo blanco (para evitar fondo negro en PNGs transparentes)
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                }
                 // Calidad 0.7 (reduce 90% el peso sin perder mucho detalle)
                 resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
@@ -57,7 +62,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
             const reader = new FileReader();
             reader.onloadend = async () => {
                 const base64 = reader.result as string;
-                // Comprimir para no saturar el servidor y evitar el límite de Vercel
                 const compressed = await compressImage(base64);
                 setEvidencia(compressed);
             };
@@ -77,7 +81,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                 return;
             }
 
-            // 1. Registrar el abono (con fecha formateada)
             await api.post('/abonos', {
                 clienteId: cliente.id!,
                 monto: montoNum,
@@ -87,7 +90,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                 verificado
             });
 
-            // 2. Actualizar la deuda si el pago está verificado
             if (verificado) {
                 const nuevaDeuda = Math.max(0, Number(cliente.deudaTotal) - montoNum);
                 await api.put(`/clientes/${cliente.id}`, { ...cliente, deudaTotal: nuevaDeuda });
@@ -95,17 +97,8 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
 
             onSuccess();
         } catch (error: any) {
-            console.error('Error al registrar abono (FULL):', error);
-            const serverError = error.response?.data?.error;
-            const status = error.response?.status;
-            
-            if (serverError) {
-                setErrorMsg(`Error del Servidor (${status}): ${serverError}`);
-            } else if (error.request) {
-                setErrorMsg('Error de red: El servidor no respondió. Es probable que la foto fuera muy pesada.');
-            } else {
-                setErrorMsg(`Error inesperado: ${error.message}`);
-            }
+            console.error('Error al registrar abono:', error);
+            setErrorMsg(error.response?.data?.error || 'No se pudo registrar el abono. Revisa tu conexión.');
         } finally {
             setIsSubmitting(false);
         }
@@ -127,7 +120,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6 flex-1 overflow-y-auto no-scrollbar px-2 pb-6 pt-2">
-                    {/* Monto */}
                     <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Monto del Abono</label>
                         <div className="relative">
@@ -144,7 +136,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                         </div>
                     </div>
 
-                    {/* Método de Pago */}
                     <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Método de Pago</label>
                         <select
@@ -159,7 +150,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                         </select>
                     </div>
 
-                    {/* Fecha */}
                     <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Fecha del Pago</label>
                         <div className="relative">
@@ -174,7 +164,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                         </div>
                     </div>
 
-                    {/* Evidencia */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 ml-4 tracking-widest uppercase">Evidencia (Opcional)</label>
                         {evidencia ? (
@@ -205,7 +194,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                         )}
                     </div>
 
-                    {/* Verificado */}
                     <div
                         onClick={() => setVerificado(!verificado)}
                         className={`p-4 rounded-3xl border-2 cursor-pointer transition-all ${verificado

@@ -15,6 +15,7 @@ interface ClientAccountStatementProps {
 export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ cliente, onClose, onSelectProduct }) => {
     const [isAddAbonoOpen, setIsAddAbonoOpen] = useState(false);
     const [editingAbono, setEditingAbono] = useState<Abono | null>(null);
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
     const [clienteActualizado, setClienteActualizado] = useState<Cliente | null>(null);
     const [ventasDetalladas, setVentasDetalladas] = useState<any[]>([]);
@@ -55,14 +56,12 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
         loadData();
     }, [cliente.id]);
 
-    // Usar el cliente actualizado si está disponible, sino usar el prop
     const clienteDisplay = clienteActualizado || cliente;
 
     return (
         <>
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
                 <div className="bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3.5rem] p-8 space-y-8 animate-slide-up shadow-2xl h-[85vh] sm:h-auto sm:max-h-[85vh] overflow-hidden flex flex-col">
-                    {/* Header */}
                     <div className="flex justify-between items-start flex-shrink-0">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary-500 text-white rounded-[1.5rem] flex items-center justify-center font-black text-2xl shadow-xl shadow-accent/20">
@@ -78,7 +77,6 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                         </button>
                     </div>
 
-                    {/* Contact Info Chips */}
                     <div className="flex flex-wrap gap-3 px-1 flex-shrink-0">
                         {clienteDisplay.whatsapp && (
                             <div className="flex items-center gap-2 bg-green-50 text-green-600 px-4 py-2 rounded-2xl border border-green-100 shadow-sm">
@@ -92,15 +90,8 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                                 <span className="text-sm font-black uppercase tracking-tight truncate max-w-[120px]">{clienteDisplay.facebook}</span>
                             </div>
                         )}
-                        {clienteDisplay.otro && (
-                            <div className="flex items-center gap-2 bg-slate-50 text-slate-600 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
-                                <Globe size={16} strokeWidth={3} />
-                                <span className="text-sm font-black uppercase tracking-tight truncate max-w-[120px]">{clienteDisplay.otro}</span>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Summary Card */}
                     <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white relative overflow-hidden flex-shrink-0">
                         <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-500/10 rounded-full blur-2xl"></div>
                         <div className="flex justify-between items-center relative z-10">
@@ -124,9 +115,7 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                         </div>
                     </div>
 
-                    {/* Tabs and Content */}
                     <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
-                        {/* Payment History */}
                         {abonos && abonos.length > 0 && (
                             <div className="space-y-3">
                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Historial de Abonos</h4>
@@ -158,11 +147,15 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                                             <p className={`font-black text-base tracking-tighter ${abono.verificado ? 'text-green-700' : 'text-amber-700'
                                                 }`}>+${Number(abono.monto || 0).toFixed(2)} <span className="text-[10px] opacity-60 ml-1">({abono.metodoPago || 'Efectivo'})</span></p>
                                             {abono.evidencia && (
-                                                <div className="flex items-center gap-1 mt-1">
-                                                    <ImageIcon size={10} className={abono.verificado ? 'text-green-600' : 'text-amber-600'} />
-                                                    <span className={`text-[8px] font-bold uppercase ${abono.verificado ? 'text-green-600' : 'text-amber-600'
-                                                        }`}>Con evidencia</span>
-                                                </div>
+                                                <button 
+                                                    onClick={() => setZoomedImage(abono.evidencia!)}
+                                                    className={`hover:scale-105 active:scale-95 transition-all flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-lg border ${
+                                                        abono.verificado ? 'bg-green-100 border-green-200 text-green-700' : 'bg-amber-100 border-amber-300 text-amber-700'
+                                                    }`}
+                                                >
+                                                    <ImageIcon size={10} strokeWidth={3} />
+                                                    <span className="text-[8px] font-black uppercase tracking-widest">Ver Comprobante</span>
+                                                </button>
                                             )}
                                         </div>
                                         <div className="flex flex-col gap-2 items-end">
@@ -185,61 +178,32 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                             </div>
                         )}
 
-                        {/* Sales History */}
                         <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Detalle de Compras</h4>
-                        {!ventasDetalladas || ventasDetalladas.length === 0 ? (
-                            <div className="text-center py-10 text-slate-400 italic text-sm">
-                                Sin compras registradas
-                            </div>
-                        ) : (
-                            ventasDetalladas.map(v => (
-                                <div
-                                    key={v.id}
-                                    onClick={() => {
-                                        if (v.producto && onSelectProduct) {
-                                            onSelectProduct(v.producto);
-                                        }
-                                    }}
-                                    className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center transition-all ${onSelectProduct && v.producto ? 'cursor-pointer hover:border-primary-300 active:scale-95 group' : ''}`}
-                                >
-                                    <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                                        {v.producto?.foto ? (
-                                            <img src={v.producto.foto} alt={v.producto.nombre} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Package className="text-slate-400" size={20} />
-                                        )}
-                                        {onSelectProduct && v.producto && (
-                                            <div className="absolute inset-0 bg-primary-500/0 group-hover:bg-primary-500/40 transition-colors flex items-center justify-center">
-                                                <Plus size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <Clock size={10} className="text-slate-400" />
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                                                {v.fecha.toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <h5 className="font-black text-slate-900 text-sm tracking-tighter truncate">
-                                            {v.producto?.nombre || 'Producto eliminado'}
-                                        </h5>
-                                        {onSelectProduct && v.producto && (
-                                            <p className="text-[8px] font-black text-primary-500 uppercase tracking-widest mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">Volver a vender</p>
-                                        )}
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Total</p>
-                                        <p className="font-black text-slate-900 text-lg tracking-tighter">${Number(v.precioVenta || 0).toFixed(2)}</p>
-                                    </div>
+                        {ventasDetalladas && ventasDetalladas.length > 0 && ventasDetalladas.map(v => (
+                            <div
+                                key={v.id}
+                                className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center`}
+                            >
+                                <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    {v.producto?.foto ? (
+                                        <img src={v.producto.foto} alt={v.producto.nombre} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Package className="text-slate-400" size={20} />
+                                    )}
                                 </div>
-                            ))
-                        )}
+                                <div className="flex-1 min-w-0">
+                                    <h5 className="font-black text-slate-900 text-sm tracking-tighter truncate">{v.producto?.nombre || 'Producto'}</h5>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{v.fecha.toLocaleDateString()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-black text-slate-900 text-lg tracking-tighter">${Number(v.precioVenta || 0).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Abono Modal */}
             {isAddAbonoOpen && (
                 <AddAbonoForm
                     cliente={clienteDisplay}
@@ -254,6 +218,27 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                     onClose={() => setEditingAbono(null)}
                     onSuccess={() => { setEditingAbono(null); loadData(); }}
                 />
+            )}
+
+            {zoomedImage && (
+                <div 
+                    className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 cursor-zoom-out animate-zoom-in"
+                    onClick={() => setZoomedImage(null)}
+                >
+                    <div className="relative w-full max-w-2xl">
+                        <img 
+                            src={zoomedImage} 
+                            className="w-full h-auto max-h-[85vh] object-contain rounded-[2rem] shadow-2xl border-4 border-white/10" 
+                            alt="Comprobante" 
+                        />
+                        <button 
+                            onClick={() => setZoomedImage(null)}
+                            className="absolute -top-12 right-0 p-3 bg-white/20 text-white rounded-2xl"
+                        >
+                            <X size={24} strokeWidth={3} />
+                        </button>
+                    </div>
+                </div>
             )}
         </>
     );

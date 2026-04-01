@@ -34,7 +34,6 @@ const Dashboard: React.FC = () => {
     const [viewingClient, setViewingClient] = useState<Cliente | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-    // Cargar clientes vistos de localStorage
     const [vistosLocales, setVistosLocales] = useState<string[]>(() => {
         const saved = localStorage.getItem('clientes_vistos');
         return saved ? JSON.parse(saved) : [];
@@ -164,7 +163,6 @@ const Dashboard: React.FC = () => {
                         </div>
                     </section>
 
-                    {/* Tandas Alert */}
                     <div className="bg-white rounded-3xl p-5 border-2 border-slate-100 flex items-center gap-4 cursor-pointer active:scale-95 transition-transform" onClick={() => setActiveTab('tandas')}>
                         <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600">
                             <AlertCircle size={24} />
@@ -175,7 +173,6 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Recent Activity */}
                     <section>
                         <div className="flex justify-between items-end mb-4">
                             <h2 className="text-xl font-bold text-slate-800">Actividad Reciente</h2>
@@ -352,7 +349,6 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Search Bar */}
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                         <input
@@ -393,17 +389,12 @@ const Dashboard: React.FC = () => {
                                                 setSelectedClientAccount(c);
                                                 const idStr = String(c.id);
                                                 if (!c.visto && !vistosLocales.includes(idStr)) {
-                                                    // Guardar localmente
                                                     const nuevosVistos = [...vistosLocales, idStr];
                                                     setVistosLocales(nuevosVistos);
                                                     localStorage.setItem('clientes_vistos', JSON.stringify(nuevosVistos));
-
-                                                    // Intentar en servidor (opcional)
                                                     try {
                                                         await api.put(`/clientes/${c.id}`, { visto: true });
-                                                    } catch (e) {
-                                                        console.log('Usando respaldo local para visto');
-                                                    }
+                                                    } catch (e) {}
                                                 }
                                             }}
                                             className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer"
@@ -438,9 +429,14 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{c.nombre}</p>
-                                                    {c.whatsapp && (
-                                                        <p className="text-sm text-green-600 font-black tracking-tight">{c.whatsapp}</p>
-                                                    )}
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-lg border border-slate-200">
+                                                            ID: {c.codigo_cliente}
+                                                        </span>
+                                                        {c.whatsapp && (
+                                                            <p className="text-sm text-green-600 font-black tracking-tight">{c.whatsapp}</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -499,7 +495,6 @@ const Dashboard: React.FC = () => {
 
             {activeTab === 'reports' && <ReportsView onShowCriticalStock={() => setIsCriticalStockOpen(true)} />}
 
-            {/* Modals */}
             {isAddProductOpen && <AddProductForm onClose={() => setIsAddProductOpen(false)} onSuccess={() => { setIsAddProductOpen(false); loadData(); }} />}
             {editingProduct && <AddProductForm producto={editingProduct} onClose={() => setEditingProduct(null)} onSuccess={() => { setEditingProduct(null); loadData(); }} />}
             {isAddClientOpen && <AddClientForm onClose={() => setIsAddClientOpen(false)} onSuccess={() => { setIsAddClientOpen(false); loadData(); }} />}
@@ -529,9 +524,7 @@ const Dashboard: React.FC = () => {
                         try {
                             await syncAllDebts();
                             await loadData();
-                        } catch (e) {
-                            console.error('Error post-venta:', e);
-                        }
+                        } catch (e) {}
                         showNotification('¡Ventas registradas y deuda cargada exitosamente!');
                     }}
                 />
@@ -577,13 +570,12 @@ const Dashboard: React.FC = () => {
                             setViewingClient(null);
                             setCartClienteId(c.id?.toString() || '');
                             setSelectedProduct(p);
-                            setSelectedClientAccount(null); // Aquí sí cerramos para ir al form
+                            setSelectedClientAccount(null);
                         }}
                     />
                 )}
             </AnimatePresence>
 
-            {/* Image Zoom Modal */}
             {zoomedImage && (
                 <div
                     className="fixed inset-0 bg-slate-900/95 z-[100] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
@@ -602,7 +594,6 @@ const Dashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Notification Toast */}
             {toast && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
                     <div className={`flex items-center gap-3 px-6 py-4 rounded-3xl shadow-2xl backdrop-blur-xl border ${toast.type === 'success'

@@ -69,7 +69,9 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{clienteDisplay.apodo || clienteDisplay.nombre}</h3>
-                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Estado de Cuenta</p>
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                                    Estado de Cuenta • <span className="text-primary-500">ID: {clienteDisplay.codigo_cliente}</span>
+                                </p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 transition-colors">
@@ -82,12 +84,6 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                             <div className="flex items-center gap-2 bg-green-50 text-green-600 px-4 py-2 rounded-2xl border border-green-100 shadow-sm">
                                 <Phone size={16} strokeWidth={3} />
                                 <span className="text-sm font-black uppercase tracking-tight">{clienteDisplay.whatsapp}</span>
-                            </div>
-                        )}
-                        {clienteDisplay.facebook && (
-                            <div className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-2xl border border-blue-100 shadow-sm">
-                                <Facebook size={16} strokeWidth={3} />
-                                <span className="text-sm font-black uppercase tracking-tight truncate max-w-[120px]">{clienteDisplay.facebook}</span>
                             </div>
                         )}
                     </div>

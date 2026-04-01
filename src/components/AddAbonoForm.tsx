@@ -18,12 +18,48 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+    const compressImage = (base64: string): Promise<string> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = base64;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1000;
+                const MAX_HEIGHT = 1000;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+                // Calidad 0.7 (reduce 90% el peso sin perder mucho detalle)
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
+            };
+        });
+    };
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setEvidencia(reader.result as string);
+            reader.onloadend = async () => {
+                const base64 = reader.result as string;
+                // Comprimir para no saturar el servidor y evitar el límite de Vercel
+                const compressed = await compressImage(base64);
+                setEvidencia(compressed);
             };
             reader.readAsDataURL(file);
         }
@@ -54,7 +90,6 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
             // 2. Actualizar la deuda si el pago está verificado
             if (verificado) {
                 const nuevaDeuda = Math.max(0, Number(cliente.deudaTotal) - montoNum);
-                // Usamos la API para actualizar al cliente
                 await api.put(`/clientes/${cliente.id}`, { ...cliente, deudaTotal: nuevaDeuda });
             }
 
@@ -67,7 +102,7 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
             if (serverError) {
                 setErrorMsg(`Error del Servidor (${status}): ${serverError}`);
             } else if (error.request) {
-                setErrorMsg('Error de red: El servidor no respondió. Revisa tu internet.');
+                setErrorMsg('Error de red: El servidor no respondió. Es probable que la foto fuera muy pesada.');
             } else {
                 setErrorMsg(`Error inesperado: ${error.message}`);
             }

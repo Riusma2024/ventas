@@ -42,6 +42,7 @@ export const PublicCatalog: React.FC = () => {
     const [loginError, setLoginError] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
     const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
+    const [zoomedEvidence, setZoomedEvidence] = useState<string | null>(null);
 
     // Profile tabs
     const [profileTab, setProfileTab] = useState<'acuerdos' | 'abonos'>('acuerdos');
@@ -364,9 +365,9 @@ export const PublicCatalog: React.FC = () => {
                                 <p className="text-xs font-bold text-slate-100 group-hover:text-primary-400 transition-colors">{clienteAuth.nombre}</p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none mb-0.5">Mi Saldo</p>
-                            <p className={`text-sm font-black tracking-tighter ${Number(clienteAuth.deudaTotal) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        <div className="text-right cursor-pointer group/saldo active:scale-95 transition-transform" onClick={() => { setProfileTab('acuerdos'); setIsProfileModalOpen(true); }}>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover/saldo:text-primary-400 transition-colors leading-none mb-0.5">Mi Saldo</p>
+                            <p className={`text-sm font-black tracking-tighter transition-colors ${Number(clienteAuth.deudaTotal) > 0 ? 'text-red-400 group-hover/saldo:text-red-300' : 'text-green-400 group-hover/saldo:text-green-300'}`}>
                                 ${Number(clienteAuth.deudaTotal).toFixed(2)}
                             </p>
                         </div>
@@ -613,8 +614,19 @@ export const PublicCatalog: React.FC = () => {
                                                     </p>
                                                     <p className="text-[10px] text-slate-400 font-bold">{new Date(a.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                                 </div>
-                                                <div className="text-right">
+                                                <div className="text-right flex flex-col items-end gap-2">
                                                     <p className={`font-black text-lg tracking-tighter ${a.verificado ? 'text-green-600' : 'text-orange-600'}`}>+$ {a.monto}</p>
+                                                    {a.evidencia && (
+                                                        <button 
+                                                            onClick={() => setZoomedEvidence(a.evidencia)}
+                                                            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all active:scale-90 ${
+                                                                a.verificado ? 'bg-green-100 border-green-200 text-green-700' : 'bg-orange-100 border-orange-200 text-orange-700'
+                                                            }`}
+                                                        >
+                                                            <Maximize2 size={10} strokeWidth={3} />
+                                                            Comprobante
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))
@@ -789,7 +801,7 @@ export const PublicCatalog: React.FC = () => {
                                         <span className="text-4xl font-black text-slate-900 tracking-tighter">
                                             ${Number(selectedProduct.precioSugerido).toLocaleString()}
                                         </span>
-                                        <div className={`px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest ${selectedProduct.stock > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                        <div className={`px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest ${selectedProduct.stock > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                                             {selectedProduct.stock > 0 ? `Stock: ${selectedProduct.stock}` : 'Agotado'}
                                         </div>
                                     </div>
@@ -835,6 +847,27 @@ export const PublicCatalog: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {zoomedEvidence && (
+                <div 
+                    className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[300] flex items-center justify-center p-4 cursor-zoom-out animate-zoom-in"
+                    onClick={() => setZoomedEvidence(null)}
+                >
+                    <div className="relative w-full max-w-2xl animate-fade-in">
+                        <img 
+                            src={zoomedEvidence} 
+                            className="w-full h-auto max-h-[85vh] object-contain rounded-[2rem] shadow-2xl border-4 border-white/10" 
+                            alt="Comprobante de Pago" 
+                        />
+                        <button 
+                            onClick={() => setZoomedEvidence(null)}
+                            className="absolute -top-12 right-0 p-3 bg-white/20 text-white rounded-2xl hover:bg-white/30 transition-colors"
+                        >
+                            <X size={24} strokeWidth={3} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

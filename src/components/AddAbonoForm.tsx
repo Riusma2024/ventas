@@ -41,7 +41,7 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                 return;
             }
 
-            // Registrar el abono (con fecha formateada)
+            // 1. Registrar el abono (con fecha formateada)
             await api.post('/abonos', {
                 clienteId: cliente.id!,
                 monto: montoNum,
@@ -51,16 +51,26 @@ export const AddAbonoForm: React.FC<AddAbonoFormProps> = ({ cliente, onClose, on
                 verificado
             });
 
-            // Actualizar la deuda del cliente si el abono está verificado (o si confías en el cliente)
+            // 2. Actualizar la deuda si el pago está verificado
             if (verificado) {
                 const nuevaDeuda = Math.max(0, Number(cliente.deudaTotal) - montoNum);
+                // Usamos la API para actualizar al cliente
                 await api.put(`/clientes/${cliente.id}`, { ...cliente, deudaTotal: nuevaDeuda });
             }
 
             onSuccess();
         } catch (error: any) {
-            console.error('Error al registrar abono:', error);
-            setErrorMsg(error.response?.data?.error || 'No se pudo registrar el abono. Revisa tu conexión.');
+            console.error('Error al registrar abono (FULL):', error);
+            const serverError = error.response?.data?.error;
+            const status = error.response?.status;
+            
+            if (serverError) {
+                setErrorMsg(`Error del Servidor (${status}): ${serverError}`);
+            } else if (error.request) {
+                setErrorMsg('Error de red: El servidor no respondió. Revisa tu internet.');
+            } else {
+                setErrorMsg(`Error inesperado: ${error.message}`);
+            }
         } finally {
             setIsSubmitting(false);
         }

@@ -6,7 +6,18 @@ import { ResultSetHeader } from 'mysql2';
 import { Resend } from 'resend';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+let resend: any = null;
+if (process.env.RESEND_API_KEY) {
+    try {
+        resend = new Resend(process.env.RESEND_API_KEY);
+        console.log('✅ Resend service initialized');
+    } catch (e) {
+        console.error('⚠️ Failed to initialize Resend:', e);
+    }
+} else {
+    console.warn('⚠️ RESEND_API_KEY is missing.');
+}
 
 const generateSlug = (text: string) => {
     return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim().replace(/^-+|-+$/g, '');
@@ -15,7 +26,7 @@ const generateSlug = (text: string) => {
 export const loginUsuario = async (req: Request, res: Response): Promise<void> => {
     try {
         const { email, password } = req.body;
-        if (!email || !password) { res.status(400).json({ error: 'Email y contraseña son requeridos' }); return; }
+        if (!email || !password) { res.status(400).json({ error: 'Faltan datos' }); return; }
         const [rows] = await db.query<any[]>('SELECT * FROM usuarios WHERE email = ?', [email]);
         if (rows.length === 0) { res.status(401).json({ error: 'Credenciales inválidas' }); return; }
         const usuario = rows[0];
@@ -24,7 +35,10 @@ export const loginUsuario = async (req: Request, res: Response): Promise<void> =
         const payload = { id: usuario.id, rol: usuario.rol, tenant_id: usuario.tenant_id, exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60) };
         const token = jwt.encode(payload, JWT_SECRET);
         res.json({ token, usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, tenant_id: usuario.tenant_id, negocio_slug: usuario.negocio_slug } });
-    } catch (error) { res.status(500).json({ error: 'Error interno del servidor' }); }
+    } catch (error: any) { 
+        console.error('Login error:', error.message);
+        res.status(500).json({ error: 'Error interno' }); 
+    }
 };
 
 export const registrarVendedor = async (req: Request, res: Response): Promise<void> => {
@@ -45,7 +59,7 @@ export const registrarVendedor = async (req: Request, res: Response): Promise<vo
         const hash = await bcrypt.hash(password, 10);
         const [result] = await db.query<ResultSetHeader>('INSERT INTO usuarios (nombre, email, password_hash, rol, negocio_nombre, negocio_slug, sub_expira_el, sub_status) VALUES (?, ?, ?, "vendedor", ?, ?, ?, "trial")', [nombre, email, hash, negocio_nombre, slug, fechaExpira]);
         const newId = result.insertId; await db.query('UPDATE usuarios SET tenant_id = ? WHERE id = ?', [newId, newId]);
-        if (process.env.RESEND_API_KEY) { await resend.emails.send({ from: 'Miss Ventas <onboarding@resend.dev>', to: email, subject: 'Bienvenido', html: `<p>Listo en: miss-ventas.com/catalogo/${slug}</p>` }); }
+        if (resend) { try { await resend.emails.send({ from: 'Miss Ventas <onboarding@resend.dev>', to: email, subject: 'Bienvenido', html: `<p>Listo en: miss-ventas.com/catalogo/${slug}</p>` }); } catch (e) {} }
         res.status(201).json({ message: 'Éxito', slug });
     } catch (error) { res.status(500).json({ error: 'Error' }); }
 };
@@ -58,7 +72,7 @@ export const solicitarRecuperacion = async (req: Request, res: Response): Promis
         const [user]: any = await db.query('SELECT id FROM usuarios WHERE email = ?', [email]);
         if (user.length === 0) { res.status(404).json({ error: 'Email no encontrado' }); return; }
         await db.query('UPDATE usuarios SET reset_token = ?, reset_token_expires = ? WHERE email = ?', [token, expira, email]);
-        if (process.env.RESEND_API_KEY) { await resend.emails.send({ from: 'Miss Ventas <seguridad@resend.dev>', to: email, subject: 'Recuperar', html: `<p>Código: ${token}</p>` }); }
+        if (resend) { try { await resend.emails.send({ from: 'Miss Ventas <seguridad@resend.dev>', to: email, subject: 'Recuperar', html: `<p>Código: ${token}</p>` }); } catch (e) {} }
         res.json({ message: 'Enviado' });
     } catch (error) { res.status(500).json({ error: 'Error' }); }
 };

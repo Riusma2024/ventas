@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jwt-simple';
 import { db } from '../config/db';
 import { ResultSetHeader } from 'mysql2';

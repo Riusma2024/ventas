@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { db } from '../config/db';
 import { AuthRequest } from '../middleware/auth.middleware';
 

@@ -235,10 +235,10 @@ app.get('/api/ventas', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
         const [rows] = await db.query(`
-            SELECT v.id, v.cliente_id as clienteId, v.productoId, v.total, v.precioVenta, v.utilidad, v.notas, v.estado, v.fecha, v.creado_en, 
+            SELECT v.id, v.clienteId, v.productoId, v.total, v.precioVenta, v.utilidad, v.notas, v.estado, v.fecha, v.creado_en, 
                    c.nombre as cliente_nombre, c.apodo as cliente_apodo 
             FROM ventas v 
-            LEFT JOIN clientes c ON v.cliente_id=c.id 
+            LEFT JOIN clientes c ON v.clienteId=c.id 
             WHERE v.tenant_id=? 
             ORDER BY v.creado_en DESC
         `, [p.tenant_id]);
@@ -250,9 +250,9 @@ app.get('/api/ventas/:id', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
         const [rows]: any = await db.query(`
-            SELECT v.*, v.cliente_id as clienteId, c.nombre as cliente_nombre, c.apodo as cliente_apodo, pr.nombre as producto_nombre
+            SELECT v.*, c.nombre as cliente_nombre, c.apodo as cliente_apodo, pr.nombre as producto_nombre
             FROM ventas v 
-            LEFT JOIN clientes c ON v.cliente_id=c.id 
+            LEFT JOIN clientes c ON v.clienteId=c.id 
             LEFT JOIN productos pr ON v.productoId=pr.id
             WHERE v.id=? AND v.tenant_id=?
         `, [req.params.id, p.tenant_id]);
@@ -275,15 +275,15 @@ app.get('/api/abonos', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
         const { clienteId } = req.query;
-        let query = 'SELECT *, cliente_id as clienteId, comprobanteId as evidencia FROM abonos WHERE tenant_id=?';
+        let query = 'SELECT * FROM abonos WHERE tenant_id=?';
         const params: any[] = [p.tenant_id];
         
         if (clienteId) {
-            query += ' AND cliente_id = ?';
+            query += ' AND clienteId = ?';
             params.push(clienteId);
         }
         
-        query += ' ORDER BY creado_en DESC';
+        query += ' ORDER BY fecha DESC';
         const [rows] = await db.query(query, params);
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }

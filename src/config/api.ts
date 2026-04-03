@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
 
-// URL de la API — backend en ventas-murex.vercel.app (Root Dir: miss-ventas-api)
-const API_URL = 'https://ventas-murex.vercel.app/api';
+// URL de la API backend (proyecto "missventas" en Vercel, root: miss-ventas-api)
+const API_URL = import.meta.env.VITE_API_URL || 'https://missventas.vercel.app/api';
 
 export const api = axios.create({
     baseURL: API_URL,

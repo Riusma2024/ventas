@@ -178,7 +178,8 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                         {ventasDetalladas && ventasDetalladas.length > 0 && ventasDetalladas.map(v => (
                             <div
                                 key={v.id}
-                                className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center`}
+                                onClick={() => v.producto && onSelectProduct?.(v.producto)}
+                                className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center cursor-pointer hover:bg-slate-100 active:scale-[0.98] transition-all`}
                             >
                                 <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                                     {v.producto?.foto ? (

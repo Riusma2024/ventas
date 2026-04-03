@@ -300,8 +300,11 @@ app.get('/api/abonos', async (req: any, res: any) => {
 app.post('/api/abonos', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const { cliente_id, monto, notas, verificado } = req.body || {};
-        const [r]: any = await db.query('INSERT INTO abonos (cliente_id,monto,notas,verificado,tenant_id) VALUES(?,?,?,?,?)', [cliente_id, monto, notas||null, verificado||0, p.tenant_id]);
+        const { clienteId, monto, metodoPago, evidenca, verificado, notas, fecha } = req.body || {};
+        const [r]: any = await db.query(
+            'INSERT INTO abonos (clienteId, monto, metodoPago, evidencia, verificado, notas, fecha, tenant_id) VALUES (?,?,?,?,?,?,?,?)', 
+            [clienteId, monto, metodoPago||'Efectivo', evidenca||null, verificado||0, notas||null, fecha||new Date(), p.tenant_id]
+        );
         res.status(201).json({ id: r.insertId });
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });

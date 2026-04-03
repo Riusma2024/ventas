@@ -20,6 +20,7 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
     const [clienteActualizado, setClienteActualizado] = useState<Cliente | null>(null);
     const [ventasDetalladas, setVentasDetalladas] = useState<any[]>([]);
     const [abonos, setAbonos] = useState<Abono[]>([]);
+    const [activeTab, setActiveTab] = useState<'compras' | 'abonos'>('compras');
 
     const loadData = async () => {
         try {
@@ -111,92 +112,108 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
-                        {abonos && abonos.length > 0 && (
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Historial de Abonos</h4>
-                                {abonos.map((abono) => (
+                    <div className="flex bg-slate-100 p-1 rounded-2xl flex-shrink-0">
+                        <button 
+                            onClick={() => setActiveTab('compras')}
+                            className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'compras' ? 'bg-white text-primary-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Compras
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('abonos')}
+                            className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'abonos' ? 'bg-white text-primary-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Abonos
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pb-20">
+                        {activeTab === 'compras' ? (
+                            ventasDetalladas && ventasDetalladas.length > 0 ? (
+                                ventasDetalladas.map(v => (
+                                    <div
+                                        key={v.id}
+                                        onClick={() => {
+                                            // ABRIR CATALOGO PÚBLICO
+                                            const url = `${window.location.origin}/catalogo/${v.tenant_id}#producto-${v.productoId}`;
+                                            window.open(url, '_blank');
+                                        }}
+                                        className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center cursor-pointer hover:bg-slate-100 active:scale-[0.98] transition-all group`}
+                                    >
+                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                            {v.producto?.foto ? (
+                                                <img src={v.producto.foto} alt={v.producto.nombre} className="w-full h-full object-contain" />
+                                            ) : (
+                                                <Package className="text-slate-400" size={20} />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h5 className="font-black text-slate-800 text-sm tracking-tighter truncate leading-tight">{v.producto?.nombre || 'Producto'}</h5>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1">{v.fecha.toLocaleDateString()} • {v.estado}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black text-primary-500 text-lg tracking-tighter">${Number(v.precioVenta || 0).toFixed(2)}</p>
+                                            <span className="text-[8px] font-black text-primary-300 uppercase tracking-widest">Catálogo</span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 text-slate-400 italic text-sm bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
+                                    <Package size={32} className="mx-auto mb-2 opacity-20" />
+                                    Sin compras registradas
+                                </div>
+                            )
+                        ) : (
+                            abonos && abonos.length > 0 ? (
+                                abonos.map((abono) => (
                                     <div
                                         key={abono.id}
-                                        className={`p-4 rounded-3xl border flex gap-4 items-center group ${abono.verificado
-                                            ? 'bg-green-50 border-green-100'
-                                            : 'bg-amber-50 border-amber-200'
+                                        className={`p-4 rounded-[2.5rem] border flex gap-4 items-center group relative overflow-hidden ${abono.verificado
+                                            ? 'bg-white border-slate-100'
+                                            : 'bg-amber-50/50 border-amber-100'
                                             }`}
                                     >
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${abono.verificado ? 'bg-green-500' : 'bg-amber-500'
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${abono.verificado ? 'bg-green-500 text-white' : 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
                                             }`}>
-                                            <DollarSign className="text-white" size={20} strokeWidth={3} />
+                                            {abono.evidencia ? (
+                                                <div className="w-full h-full rounded-2xl overflow-hidden cursor-pointer" onClick={() => setZoomedImage(abono.evidencia!)}>
+                                                    <img src={abono.evidencia} className="w-full h-full object-cover" alt="Comprobante" />
+                                                </div>
+                                            ) : (
+                                                <Wallet size={20} strokeWidth={3} />
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <Clock size={10} className={abono.verificado ? 'text-green-600' : 'text-amber-600'} />
                                                 <span className={`text-[9px] font-black uppercase tracking-tighter ${abono.verificado ? 'text-green-600' : 'text-amber-600'
                                                     }`}>
                                                     {abono.fecha.toLocaleDateString()}
                                                 </span>
-                                                {abono.verificado ? (
-                                                    <CheckCircle size={12} className="text-green-600" />
-                                                ) : (
-                                                    <XCircle size={12} className="text-amber-600" />
-                                                )}
+                                                {abono.verificado && <CheckCircle size={10} className="text-green-500" />}
                                             </div>
-                                            <p className={`font-black text-base tracking-tighter ${abono.verificado ? 'text-green-700' : 'text-amber-700'
-                                                }`}>+${Number(abono.monto || 0).toFixed(2)} <span className="text-[10px] opacity-60 ml-1">({abono.metodoPago || 'Efectivo'})</span></p>
-                                            {abono.evidencia && (
-                                                <button 
-                                                    onClick={() => setZoomedImage(abono.evidencia!)}
-                                                    className={`hover:scale-105 active:scale-95 transition-all flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-lg border ${
-                                                        abono.verificado ? 'bg-green-100 border-green-200 text-green-700' : 'bg-amber-100 border-amber-300 text-amber-700'
-                                                    }`}
-                                                >
-                                                    <ImageIcon size={10} strokeWidth={3} />
-                                                    <span className="text-[8px] font-black uppercase tracking-widest">Ver Comprobante</span>
-                                                </button>
-                                            )}
+                                            <p className={`font-black text-base tracking-tighter ${abono.verificado ? 'text-slate-900' : 'text-amber-900'
+                                                }`}>+${Number(abono.monto || 0).toFixed(2)}</p>
                                         </div>
-                                        <div className="flex flex-col gap-2 items-end">
-                                            <p className={`text-[8px] font-black uppercase tracking-widest ${abono.verificado ? 'text-green-600' : 'text-amber-600'
-                                                }`}>
-                                                {abono.verificado ? 'Verificado' : '⚠ Pendiente'}
-                                            </p>
+                                        <div className="flex flex-col gap-1 items-end">
+                                            <span className={`px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest ${abono.verificado ? 'bg-green-50 text-green-500' : 'bg-amber-100 text-amber-600'}`}>
+                                                {abono.verificado ? 'Verificado' : 'Pendiente'}
+                                            </span>
                                             <button
                                                 onClick={() => setEditingAbono(abono)}
-                                                className={`p-2 rounded-xl active:scale-90 transition-all opacity-0 group-hover:opacity-100 ${abono.verificado
-                                                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                    : 'bg-amber-100 text-amber-600 hover:bg-amber-200'
-                                                    }`}
+                                                className={`p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all opacity-0 group-hover:opacity-100`}
                                             >
                                                 <Edit size={14} strokeWidth={3} />
                                             </button>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 text-slate-400 italic text-sm bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
+                                    <Wallet size={32} className="mx-auto mb-2 opacity-20" />
+                                    Sin abonos registrados
+                                </div>
+                            )
                         )}
-
-                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Detalle de Compras</h4>
-                        {ventasDetalladas && ventasDetalladas.length > 0 && ventasDetalladas.map(v => (
-                            <div
-                                key={v.id}
-                                onClick={() => v.producto && onSelectProduct?.(v.producto)}
-                                className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center cursor-pointer hover:bg-slate-100 active:scale-[0.98] transition-all`}
-                            >
-                                <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
-                                    {v.producto?.foto ? (
-                                        <img src={v.producto.foto} alt={v.producto.nombre} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <Package className="text-slate-400" size={20} />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h5 className="font-black text-slate-900 text-sm tracking-tighter truncate">{v.producto?.nombre || 'Producto'}</h5>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{v.fecha.toLocaleDateString()}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-black text-slate-900 text-lg tracking-tighter">${Number(v.precioVenta || 0).toFixed(2)}</p>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>

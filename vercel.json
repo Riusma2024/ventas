@@ -1,11 +1,11 @@
 {
   "rewrites": [
     { "source": "/api/test", "destination": "/api/test.js" },
-    { "source": "/api/(.*)", "destination": "/api/index.ts" },
+    { "source": "/api/:path*", "destination": "/api/handler.ts" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/test.js": { "memory": 1024, "maxDuration": 10 },
-    "api/index.ts": { "memory": 1024, "maxDuration": 10 }
+    "api/handler.ts": { "memory": 1024, "maxDuration": 30 }
   }
 }

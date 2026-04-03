@@ -54,16 +54,21 @@ const AppRoutes: React.FC = () => {
             </Route>
 
             {/* Rutas exclusivas del VENDEDOR (Anteriormente Gestionador) */}
-            <Route element={<RoleRoute allowedRoles={['vendedor']} />}>
-                <Route path="/*" element={
+            <Route element={<RoleRoute allowedRoles={['vendedor', 'gestionador']} />}>
+                <Route path="/" element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
                     <ProtectedRoute>
                         <Dashboard />
                     </ProtectedRoute>
                 } />
             </Route>
 
-            {/* Redirección por defecto */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Redirección por defecto si no hay ruta */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     );
 };

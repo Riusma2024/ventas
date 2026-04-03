@@ -12,7 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@types/jwt-simple": "^0.5.36",
     "bcryptjs": "^2.4.3",

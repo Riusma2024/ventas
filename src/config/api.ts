@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
 
-// La URL de tu backend local (cambiar a Vercel en prod)
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// URL definitiva de la API en producción
+const API_URL = 'https://missventas.vercel.app/api';
 
 export const api = axios.create({
     baseURL: API_URL,
@@ -29,7 +29,6 @@ api.interceptors.response.use((response) => {
     if (error.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('usuario');
-        // Redirigir al inicio de sesión aquí si es necesario
         window.location.href = '/login';
     }
     return Promise.reject(error);

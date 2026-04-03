@@ -28,17 +28,27 @@ app.use(cors({
 
 app.use(express.json());
 
-// Inyectar Rutas
+// Inyectar Rutas (Soporta prefijo /api y rutas directas para Vercel Serverless)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/users', usersRoutes);
 app.use('/api/productos', productosRoutes);
+app.use('/productos', productosRoutes);
 app.use('/api/clientes', clientesRoutes);
+app.use('/clientes', clientesRoutes);
 app.use('/api/ventas', ventasRoutes);
+app.use('/ventas', ventasRoutes);
 app.use('/api/abonos', abonosRoutes);
+app.use('/abonos', abonosRoutes);
 app.use('/api/tandas', tandasRoutes);
+app.use('/tandas', tandasRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/public', publicRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/payments', paymentsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/admin', adminRoutes);
 
 // Health Check & DB Warm-up
 app.get('/api/health', (req, res) => {

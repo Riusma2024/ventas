@@ -234,7 +234,7 @@ app.delete('/api/clientes/:id', async (req: any, res: any) => {
 app.get('/api/ventas', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const [rows] = await db.query(`
+        const [rows]: any = await db.query(`
             SELECT v.id, v.clienteId, v.productoId, v.total, v.precioVenta, v.utilidad, v.notas, v.estado, v.fecha, v.creado_en, 
                    c.nombre as cliente_nombre, c.apodo as cliente_apodo 
             FROM ventas v 
@@ -242,7 +242,15 @@ app.get('/api/ventas', async (req: any, res: any) => {
             WHERE v.tenant_id=? 
             ORDER BY v.creado_en DESC
         `, [p.tenant_id]);
-        res.json(rows);
+        
+        // ASEGURAR QUE LOS IDs SEAN CONSISTENTES PARA EL FRONTEND
+        const mapped = rows.map((r: any) => ({
+            ...r,
+            id: Number(r.id),
+            clienteId: Number(r.clienteId),
+            productoId: Number(r.productoId)
+        }));
+        res.json(mapped);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 

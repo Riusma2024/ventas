@@ -85,10 +85,11 @@ const Dashboard: React.FC = () => {
         try {
             setLoadingData(true);
             const ts = Date.now();
-            const [prodRes, cliRes, ventRes] = await Promise.all([
+            const [prodRes, cliRes, ventRes, abonosRes] = await Promise.all([
                 api.get(`/productos?t=${ts}`),
                 api.get(`/clientes?t=${ts}`),
-                api.get(`/ventas?t=${ts}`)
+                api.get(`/ventas?t=${ts}`),
+                api.get(`/abonos?t=${ts}`)
             ]);
 
             const productsData = prodRes.data.map((p: any) => ({
@@ -97,6 +98,7 @@ const Dashboard: React.FC = () => {
             }));
             setProductos(productsData);
             setClientes(cliRes.data);
+            setAbonos(abonosRes.data);
 
             const ventasData = ventRes.data.map((v: any) => ({
                 ...v,

@@ -274,7 +274,17 @@ app.post('/api/ventas', async (req: any, res: any) => {
 app.get('/api/abonos', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const [rows] = await db.query('SELECT *, cliente_id as clienteId FROM abonos WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
+        const { clienteId } = req.query;
+        let query = 'SELECT *, cliente_id as clienteId, comprobanteId as evidencia FROM abonos WHERE tenant_id=?';
+        const params: any[] = [p.tenant_id];
+        
+        if (clienteId) {
+            query += ' AND cliente_id = ?';
+            params.push(clienteId);
+        }
+        
+        query += ' ORDER BY creado_en DESC';
+        const [rows] = await db.query(query, params);
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });

@@ -1,4 +1,4 @@
-// v2026.03.09-avatar-fix
+// v2026.04.03-restore-final-fix
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { api } from '../config/api';

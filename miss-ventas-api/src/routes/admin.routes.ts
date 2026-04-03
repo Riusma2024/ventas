@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getCupones, crearCupon, eliminarCupon } from '../controllers/admin.controller';
-import { verifyToken, requireRol } from '../middleware/auth.middleware';
+import { getCupones, crearCupon, eliminarCupon } from '../controllers/admin.controller.js';
+import { verifyToken, requireRol } from '../middleware/auth.middleware.js';
 
 const router = Router();
 

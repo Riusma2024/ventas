@@ -250,7 +250,7 @@ app.get('/api/ventas/:id', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
         const [rows]: any = await db.query(`
-            SELECT v.*, c.nombre as cliente_nombre, c.apodo as cliente_apodo, pr.nombre as producto_nombre
+            SELECT v.*, v.cliente_id as clienteId, c.nombre as cliente_nombre, c.apodo as cliente_apodo, pr.nombre as producto_nombre
             FROM ventas v 
             LEFT JOIN clientes c ON v.cliente_id=c.id 
             LEFT JOIN productos pr ON v.productoId=pr.id

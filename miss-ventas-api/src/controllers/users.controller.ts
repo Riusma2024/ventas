@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { db } from '../config/db';
 import { AuthRequest } from '../middleware/auth.middleware';
 
-// [Superadmin] Crear un nuevo Gestionador o cliente
+// [Superadmin] Crear un nuevo Vendedor (Antes Gestionador) o cliente
 export const crearUsuario = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { nombre, email, password, rol } = req.body;
@@ -13,60 +13,50 @@ export const crearUsuario = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Si quien crea es un Superadmin, puede crear Gestionadores. 
-        // Si no lo es, rechazamos por precaución. (Aquí también podría el gestionador crear clientes de acceso, pero por simplicidad solo SA crea G).
-
         let targetTenantId = null;
 
-        if (rol === 'gestionador') {
+        // Soporte para ambos nombres durante transición
+        const effectiveRol = (rol === 'gestionador' || rol === 'vendedor') ? 'vendedor' : rol;
+
+        if (effectiveRol === 'vendedor') {
             if (req.user?.rol !== 'superadmin') {
-                res.status(403).json({ error: 'Solo el Superadmin puede crear Gestionadores.' });
+                res.status(403).json({ error: 'Solo el Superadmin puede crear Vendedores.' });
                 return;
             }
-        } else if (rol === 'cliente') {
-            // Un Gestionador crea a un cliente y se asigna su tenant_id
-            if (req.user?.rol !== 'gestionador') {
-                res.status(403).json({ error: 'Solo los gestionadores pueden crear accesos para clientes finales.' });
+        } else if (effectiveRol === 'cliente') {
+            if (req.user?.rol !== 'vendedor' && req.user?.rol !== 'gestionador') {
+                res.status(403).json({ error: 'Solo los vendedores pueden crear accesos para clientes finales.' });
                 return;
             }
-            targetTenantId = req.user.id; // El cliente pertenecerá al gestionador actual
+            targetTenantId = req.user.id;
         }
 
-        // Check si el email ya existe
-        const [existing] = await db.query<any[]>('SELECT id FROM usuarios WHERE email = ?', [email]);
+        const [existing] = await db.query<any[]>('SELECT id FROM Usuarios WHERE email = ?', [email]);
         if (existing.length > 0) {
             res.status(400).json({ error: 'El email ya está registrado' });
             return;
         }
 
-        // Hashear password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Insertar en Base de Datos
         const [result] = await db.query<any>(
-            'INSERT INTO usuarios (nombre, email, password_hash, rol, tenant_id) VALUES (?, ?, ?, ?, ?)',
-            [nombre, email, passwordHash, rol, targetTenantId]
+            'INSERT INTO Usuarios (nombre, email, password_hash, rol, tenant_id) VALUES (?, ?, ?, ?, ?)',
+            [nombre, email, passwordHash, effectiveRol, targetTenantId]
         );
 
-        // Si creamos un Gestionador, su propio tenant_id es su propio ID recién creado.
-        // Hacemos un UPDATE rápido.
-        if (rol === 'gestionador') {
+        if (effectiveRol === 'vendedor') {
             await db.query('UPDATE Usuarios SET tenant_id = ? WHERE id = ?', [result.insertId, result.insertId]);
         }
 
-        res.status(201).json({
-            mensaje: 'Usuario creado exitosamente',
-            usuarioId: result.insertId
-        });
+        res.status(201).json({ mensaje: 'Usuario creado exitosamente', usuarioId: result.insertId });
 
     } catch (error: any) {
-        console.error('Error detallado creando usuario:', error?.message || error);
         res.status(500).json({ error: 'Error interno del servidor', detail: error?.message });
     }
 };
 
-// [Superadmin] Obtener lista de Gestionadores
+// [Superadmin] Obtener lista de Vendedores
 export const getGestionadores = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (req.user?.rol !== 'superadmin') {
@@ -74,14 +64,17 @@ export const getGestionadores = async (req: AuthRequest, res: Response): Promise
             return;
         }
 
-        const [rows] = await db.query<any[]>('SELECT id, nombre, email, creado_en FROM usuarios WHERE rol = ?', ['gestionador']);
+        // Buscamos ambos por si queda alguno sin migrar, pero priorizamos 'vendedor'
+        const [rows] = await db.query<any[]>(
+            'SELECT id, nombre, email, creado_en, sub_status, sub_expira_el FROM Usuarios WHERE rol IN ("vendedor", "gestionador")'
+        );
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
-// [Superadmin] Editar un Gestionador
+// [Superadmin] Editar un Vendedor
 export const updateGestionador = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (req.user?.rol !== 'superadmin') {
@@ -93,25 +86,13 @@ export const updateGestionador = async (req: AuthRequest, res: Response): Promis
         const { nombre, email, password } = req.body;
 
         if (!nombre || !email) {
-            res.status(400).json({ error: 'Faltan datos requeridos (nombre, email)' });
+            res.status(400).json({ error: 'Faltan datos requeridos' });
             return;
         }
 
-        // Check if the user exists and is a gestionador
-        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM usuarios WHERE id = ?', [id]);
+        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM Usuarios WHERE id = ?', [id]);
         if (existingUser.length === 0) {
-            res.status(404).json({ error: 'Gestionador no encontrado' });
-            return;
-        }
-        if (existingUser[0].rol !== 'gestionador') {
-            res.status(400).json({ error: 'El usuario no es un gestionador' });
-            return;
-        }
-
-        // Check if the new email already exists for a different user
-        const [existingEmail] = await db.query<any[]>('SELECT id FROM usuarios WHERE email = ? AND id != ?', [email, id]);
-        if (existingEmail.length > 0) {
-            res.status(400).json({ error: 'El email ya está registrado ppor otro usuario' });
+            res.status(404).json({ error: 'Vendedor no encontrado' });
             return;
         }
 
@@ -123,21 +104,16 @@ export const updateGestionador = async (req: AuthRequest, res: Response): Promis
                 [nombre, email, passwordHash, id]
             );
         } else {
-            await db.query(
-                'UPDATE Usuarios SET nombre = ?, email = ? WHERE id = ?',
-                [nombre, email, id]
-            );
+            await db.query('UPDATE Usuarios SET nombre = ?, email = ? WHERE id = ?', [nombre, email, id]);
         }
 
-        res.json({ mensaje: 'Gestionador actualizado exitosamente' });
-
+        res.json({ mensaje: 'Vendedor actualizado exitosamente' });
     } catch (error: any) {
-        console.error('Error editando gestionador:', error?.message || error);
-        res.status(500).json({ error: 'Error interno del servidor', detail: error?.message });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
-// [Superadmin] Eliminar un Gestionador
+// [Superadmin] Eliminar un Vendedor
 export const deleteGestionador = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (req.user?.rol !== 'superadmin') {
@@ -146,31 +122,20 @@ export const deleteGestionador = async (req: AuthRequest, res: Response): Promis
         }
 
         const { id } = req.params;
-
-        // Check if the user exists and is a gestionador
-        const [existingUser] = await db.query<any[]>('SELECT id, rol FROM usuarios WHERE id = ?', [id]);
+        const [existingUser] = await db.query<any[]>('SELECT id FROM Usuarios WHERE id = ?', [id]);
+        
         if (existingUser.length === 0) {
-            res.status(404).json({ error: 'Gestionador no encontrado' });
-            return;
-        }
-        if (existingUser[0].rol !== 'gestionador') {
-            res.status(400).json({ error: 'El usuario no es un gestionador o no puede ser eliminado' });
+            res.status(404).json({ error: 'Vendedor no encontrado' });
             return;
         }
 
-        // (Optional) Check if the gestionador has associated clients/sales before deleting. 
-        // We'll delete directly for now or let DB handle foreign key constraints depending on the schema.
-        await db.query('DELETE FROM usuarios WHERE id = ?', [id]);
-
-        res.json({ mensaje: 'Gestionador eliminado exitosamente' });
-
+        await db.query('DELETE FROM Usuarios WHERE id = ?', [id]);
+        res.json({ mensaje: 'Vendedor eliminado exitosamente' });
     } catch (error: any) {
-        console.error('Error eliminando gestionador:', error?.message || error);
-        // Include a check if the error is a foreign key constraint violation
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({ error: 'No se puede eliminar el gestionador porque tiene clientes o datos asociados. Elimínelos o reasígnelos primero.' });
+            res.status(400).json({ error: 'No se puede eliminar el vendedor porque tiene clientes o datos asociados.' });
         } else {
-            res.status(500).json({ error: 'Error interno del servidor', detail: error?.message });
+            res.status(500).json({ error: 'Error interno del servidor' });
         }
     }
 };

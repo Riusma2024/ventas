@@ -39,9 +39,9 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                 imagenes: p.imagenes ? (typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : p.imagenes) : []
             }));
             const clientSales = ventRes.data
-                .filter((v: any) => v.clienteId === cliente.id)
+                .filter((v: any) => String(v.clienteId) === String(cliente.id))
                 .map((v: any) => {
-                    return { ...v, producto: allProducts.find((p: any) => p.id === v.productoId), fecha: new Date(v.fecha) };
+                    return { ...v, producto: allProducts.find((p: any) => String(p.id) === String(v.productoId)), fecha: new Date(v.fecha) };
                 });
             setVentasDetalladas(clientSales);
 

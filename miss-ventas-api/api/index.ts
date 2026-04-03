@@ -283,7 +283,7 @@ app.get('/api/abonos', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
         const { clienteId } = req.query;
-        let query = 'SELECT * FROM abonos WHERE tenant_id=?';
+        let query = 'SELECT *, clienteId as clienteId, evidencia as evidencia FROM abonos WHERE tenant_id=?';
         const params: any[] = [p.tenant_id];
         
         if (clienteId) {

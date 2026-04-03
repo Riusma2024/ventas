@@ -1,12 +1,10 @@
 import { Router } from 'express';
-import { getPublicCatalog, submitApartados } from '../controllers/public.controller';
+import { getPublicSub, getCatalog, getClientData, submitOrder } from '../controllers/public.controller.js';
 
 const router = Router();
-
-// /api/public/catalogo/:tenant_id
-router.get('/catalogo/:tenant_id', getPublicCatalog);
-
-// /api/public/apartado/:tenant_id
-router.post('/apartado/:tenant_id', submitApartados);
+router.get('/tenant/:slug', getPublicSub);
+router.get('/catalog/:tenantId', getCatalog);
+router.get('/client/:tenantId/:email', getClientData);
+router.post('/order', submitOrder);
 
 export default router;

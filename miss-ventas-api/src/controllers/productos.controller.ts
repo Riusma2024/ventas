@@ -1,98 +1,42 @@
 import { Response } from 'express';
-import { db } from '../config/db';
-import { AuthRequest } from '../middleware/auth.middleware';
+import { db } from '../config/db.js';
+import { AuthRequest } from '../middleware/auth.middleware.js';
 
-// [Gestionador / Cliente] Ver Productos
 export const getProductos = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const tenant_id = req.user?.tenant_id;
-
-        if (!tenant_id) {
-            res.status(403).json({ error: 'Tenant ID no encontrado en el contexto del usuario' });
-            return;
-        }
-
         const [rows] = await db.query<any[]>('SELECT * FROM productos WHERE tenant_id = ?', [tenant_id]);
         res.json(rows);
-    } catch (error) {
-        console.error('Error al obtener productos:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Error' }); }
 };
 
-// [Gestionador] Crear un Producto
 export const createProducto = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const tenant_id = req.user?.tenant_id;
-        const { nombre, costo, precioSugerido, categoria, foto, stock, descripcion, imagenes } = req.body;
-
-        if (!nombre || costo === undefined || precioSugerido === undefined) {
-            res.status(400).json({ error: 'Faltan datos requeridos (nombre, costo, precioSugerido)' });
-            return;
-        }
-
-        const initialStock = stock || 0;
-        const imagenesStr = imagenes ? JSON.stringify(imagenes) : null;
-
+        const { nombre, descripcion, precio_lista, precio_contado, imagen_url } = req.body;
         const [result] = await db.query<any>(
-            'INSERT INTO productos (tenant_id, nombre, costo, precioSugerido, categoria, foto, stock, descripcion, imagenes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [tenant_id, nombre, costo, precioSugerido, categoria || null, foto || null, initialStock, descripcion || null, imagenesStr]
+            'INSERT INTO productos (tenant_id, nombre, descripcion, precio_lista, precio_contado, imagen_url) VALUES (?, ?, ?, ?, ?, ?)',
+            [tenant_id, nombre, descripcion || null, precio_lista, precio_contado, imagen_url || null]
         );
-
-        res.status(201).json({ id: result.insertId, ...req.body, tenant_id });
-    } catch (error) {
-        console.error('Error al crear producto:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+        res.status(201).json({ id: result.insertId, mensaje: 'Éxito' });
+    } catch (error) { res.status(500).json({ error: 'Error' }); }
 };
 
-// [Gestionador] Actualizar Producto
 export const updateProducto = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
         const tenant_id = req.user?.tenant_id;
-        const { nombre, costo, precioSugerido, categoria, foto, stock, descripcion, imagenes } = req.body;
-
-        const imagenesStr = imagenes ? JSON.stringify(imagenes) : null;
-
-        const [result] = await db.query<any>(
-            `UPDATE productos 
-             SET nombre = ?, costo = ?, precioSugerido = ?, categoria = ?, foto = ?, stock = ?, descripcion = ?, imagenes = ?
-             WHERE id = ? AND tenant_id = ?`,
-            [nombre, costo, precioSugerido, categoria || null, foto || null, stock, descripcion || null, imagenesStr, id, tenant_id]
-        );
-
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Producto no encontrado o no autorizado' });
-            return;
-        }
-
-        res.json({ mensaje: 'Producto actualizado exitosamente' });
-    } catch (error) {
-        console.error('Error actualizando producto:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+        const { nombre, descripcion, precio_lista, precio_contado, imagen_url } = req.body;
+        await db.query('UPDATE productos SET nombre = ?, descripcion = ?, precio_lista = ?, precio_contado = ?, imagen_url = ? WHERE id = ? AND tenant_id = ?', [nombre, descripcion, precio_lista, precio_contado, imagen_url, id, tenant_id]);
+        res.json({ mensaje: 'Éxito' });
+    } catch (error) { res.status(500).json({ error: 'Error' }); }
 };
 
-// [Gestionador] Eliminar Producto
 export const deleteProducto = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
         const tenant_id = req.user?.tenant_id;
-
-        const [result] = await db.query<any>(
-            'DELETE FROM productos WHERE id = ? AND tenant_id = ?',
-            [id, tenant_id]
-        );
-
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Producto no encontrado o no autorizado' });
-            return;
-        }
-
-        res.json({ mensaje: 'Producto eliminado exitosamente' });
-    } catch (error) {
-        console.error('Error eliminando producto:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+        await db.query('DELETE FROM productos WHERE id = ? AND tenant_id = ?', [id, tenant_id]);
+        res.json({ mensaje: 'Éxito' });
+    } catch (error) { res.status(500).json({ error: 'Error' }); }
 };

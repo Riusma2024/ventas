@@ -235,7 +235,7 @@ app.get('/api/ventas', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
         const [rows] = await db.query(`
-            SELECT v.id, v.cliente_id as clienteId, v.total, v.precioVenta, v.utilidad, v.notas, v.estado, v.fecha, v.creado_en, 
+            SELECT v.id, v.cliente_id as clienteId, v.productoId, v.sub_producto_id, v.total, v.precioVenta, v.utilidad, v.notas, v.estado, v.fecha, v.creado_en, 
                    c.nombre as cliente_nombre, c.apodo as cliente_apodo 
             FROM ventas v 
             LEFT JOIN clientes c ON v.cliente_id=c.id 
@@ -243,6 +243,21 @@ app.get('/api/ventas', async (req: any, res: any) => {
             ORDER BY v.creado_en DESC
         `, [p.tenant_id]);
         res.json(rows);
+    } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/ventas/:id', async (req: any, res: any) => {
+    const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
+    try {
+        const [rows]: any = await db.query(`
+            SELECT v.*, c.nombre as cliente_nombre, c.apodo as cliente_apodo, pr.nombre as producto_nombre
+            FROM ventas v 
+            LEFT JOIN clientes c ON v.cliente_id=c.id 
+            LEFT JOIN productos pr ON v.productoId=pr.id
+            WHERE v.id=? AND v.tenant_id=?
+        `, [req.params.id, p.tenant_id]);
+        if (!rows.length) return res.status(404).json({ error: 'No encontrada' });
+        res.json(rows[0]);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 

@@ -16,7 +16,7 @@ import { syncAllDebts } from '../utils/dbUtils';
 import { useAuth } from '../context/AuthContext';
 import { ClientAccountStatement } from '../components/ClientAccountStatement';
 import { SaleDetail } from '../components/SaleDetail';
-import { type Cliente, type Venta, type Producto } from '../db/db';
+import { type Cliente, type Venta, type Producto, type Abono } from '../db/db';
 import { ProductDetail } from '../components/ProductDetail';
 import { ShareMenu } from '../components/ShareMenu';
 import { CriticalStockModal } from '../components/CriticalStockModal';

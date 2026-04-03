@@ -1,12 +1,5 @@
 {
-  "buildCommand": "",
-  "outputDirectory": "public",
-  "functions": {
-    "api/index.ts": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
+  "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.ts" }
   ]

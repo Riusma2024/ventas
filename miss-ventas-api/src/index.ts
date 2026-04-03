@@ -45,6 +45,11 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', serverTime: new Date().toISOString() });
 });
 
+// Catch-all 404 for debugging
+app.use('*', (req, res) => {
+    res.status(404).json({ error: 'Express CatchAll 404', originalUrl: req.originalUrl, url: req.url, path: req.path });
+});
+
 // Inicializar DB en segundo plano
 if (process.env.NODE_ENV !== 'test') {
     initDB()

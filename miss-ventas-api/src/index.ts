@@ -17,17 +17,19 @@ import adminRoutes from './routes/admin.routes';
 
 dotenv.config();
 
-// Inicializar DB (Crea tablas faltantes en Vercel)
-initDB().catch(err => console.error('Error in DB Init:', err));
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// Configuración de CORS Maestra (Permitir todo para desbloquear producción)
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
-// Routes Setup
+// Inyectar Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/productos', productosRoutes);
@@ -39,9 +41,16 @@ app.use('/api/public', publicRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Basic health check route
+// Health Check & DB Warm-up (No bloqueante)
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Miss Ventas API is running' });
+    res.json({ status: 'ok', serverTime: new Date().toISOString() });
 });
+
+// Inicializar DB en segundo plano para no tumbar el servidor en el arranque
+if (process.env.NODE_ENV !== 'test') {
+    initDB()
+        .then(() => console.log('✅ DB Schema verified asynchronously'))
+        .catch(err => console.error('⚠️ DB Initialization skipped or failed:', err.message));
+}
 
 export default app;

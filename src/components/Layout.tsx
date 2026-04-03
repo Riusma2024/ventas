@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Package, Users, Users2, PieChart, LogOut, Inbox } from 'lucide-react';
+import { Home, Package, Users, Users2, PieChart, LogOut, Inbox, Activity } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface LayoutProps {
@@ -17,6 +17,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         { id: 'home', icon: Home, label: 'Inicio' },
         { id: 'inventory', icon: Package, label: 'Inventario' },
         { id: 'crm', icon: Users, label: 'Clientes' },
+        { id: 'history', icon: Activity, label: 'Operaciones' },
         { id: 'tandas', icon: Users2, label: 'Tandas' },
         { id: 'requests', icon: Inbox, label: 'Solicitudes' },
         { id: 'reports', icon: PieChart, label: 'Resumen' },

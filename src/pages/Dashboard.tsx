@@ -57,6 +57,8 @@ const Dashboard: React.FC = () => {
     const [productos, setProductos] = useState<Producto[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [ventasHoy, setVentasHoy] = useState<Venta[]>([]);
+    const [abonos, setAbonos] = useState<Abono[]>([]);
+    const [historyTab, setHistoryTab] = useState<'sales' | 'payments'>('sales');
     const [loadingData, setLoadingData] = useState(true);
 
     const [shareConfig, setShareConfig] = useState<{
@@ -494,6 +496,96 @@ const Dashboard: React.FC = () => {
 
             {activeTab === 'requests' && <PendingRequestsManager />}
             {activeTab === 'tandas' && <TandaManager />}
+            
+            {activeTab === 'history' && (
+                <div className="space-y-6">
+                    <div className="flex flex-col gap-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-slate-800">Historial de Operaciones</h2>
+                        </div>
+                        
+                        <div className="flex bg-slate-100 p-1 rounded-2xl w-full max-w-sm">
+                            <button 
+                                onClick={() => setHistoryTab('sales')}
+                                className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${historyTab === 'sales' ? 'bg-white text-primary-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Compras
+                            </button>
+                            <button 
+                                onClick={() => setHistoryTab('payments')}
+                                className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${historyTab === 'payments' ? 'bg-white text-primary-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Abonos
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 pb-20">
+                        {historyTab === 'sales' ? (
+                            ventasHoy && ventasHoy.length > 0 ? (
+                                [...ventasHoy].reverse().map(v => (
+                                    <div 
+                                        key={v.id} 
+                                        className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex justify-between items-center group active:scale-95 transition-all cursor-pointer"
+                                        onClick={() => setSelectedSale(v)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-primary-50 text-primary-500 rounded-2xl flex items-center justify-center">
+                                                <Package size={22} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-900">{clientes?.find(c => String(c.id) === String(v.clienteId))?.nombre || 'Venta'}</h4>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                                    {new Date(v.fecha).toLocaleDateString()} • {new Date(v.fecha).toLocaleTimeString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black text-primary-600 text-lg tracking-tighter">+${v.precioVenta}</p>
+                                            <p className="text-[10px] text-slate-300 font-bold uppercase">{v.estado}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
+                                    <Package size={48} className="mx-auto text-slate-200 mb-4" />
+                                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No hay ventas registradas</p>
+                                </div>
+                            )
+                        ) : (
+                            abonos && abonos.length > 0 ? (
+                                [...abonos].reverse().map(a => (
+                                    <div 
+                                        key={a.id} 
+                                        className={`p-5 rounded-[2rem] border shadow-sm flex justify-between items-center group active:scale-95 transition-all ${a.verificado ? 'bg-white border-slate-100' : 'bg-amber-50/50 border-amber-100'}`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${a.verificado ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}`}>
+                                                <Wallet size={22} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-900">{clientes?.find(c => String(c.id) === String(a.clienteId))?.nombre || 'Abono'}</h4>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                                    {new Date(a.fecha).toLocaleDateString()} • {a.metodoPago || 'Efectivo'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={`font-black text-lg tracking-tighter ${a.verificado ? 'text-green-600' : 'text-amber-600'}`}>+${a.monto}</p>
+                                            <p className={`text-[10px] font-bold uppercase ${a.verificado ? 'text-green-400' : 'text-amber-400'}`}>{a.verificado ? 'Verificado' : 'Pendiente'}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
+                                    <Wallet size={48} className="mx-auto text-slate-200 mb-4" />
+                                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No hay abonos registrados</p>
+                                </div>
+                            )
+                        )}
+                    </div>
+                </div>
+            )}
 
             {activeTab === 'reports' && <ReportsView onShowCriticalStock={() => setIsCriticalStockOpen(true)} />}
 

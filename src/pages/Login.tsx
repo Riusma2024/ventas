@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../config/api';
 
@@ -85,6 +85,16 @@ const Login: React.FC = () => {
                     >
                         {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                     </button>
+                    
+                    <div className="flex flex-col gap-4 text-center mt-6">
+                        <Link to="/forgot-password" className="text-primary-600 hover:text-primary-700 font-bold transition-all text-sm">
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+                        <hr className="border-slate-100" />
+                        <p className="text-slate-500 text-sm font-medium">
+                            ¿Aún no tienes cuenta? <Link to="/register" className="text-primary-600 hover:underline font-black">Regístrate como Vendedor</Link>
+                        </p>
+                    </div>
                 </form>
             </div>
         </div>

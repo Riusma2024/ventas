@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import SuperadminDashboard from './pages/SuperadminDashboard';
 import PublicCatalog from './pages/PublicCatalog';
@@ -21,10 +23,13 @@ const RoleRoute: React.FC<{ allowedRoles: string[] }> = ({ allowedRoles }) => {
     if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">Cargando...</div>;
     if (!user) return <Navigate to="/login" replace />;
 
-    if (!allowedRoles.includes(user.rol)) {
-        // Redirigir según el rol que sí tengan
-        if (user.rol === 'superadmin') return <Navigate to="/admin" replace />;
-        return <Navigate to="/" replace />; // Gestionador o Cliente
+    const userRole = user.rol;
+    // Mapeo temporal si el rol antiguo persiste en el token
+    const effectiveRoles = allowedRoles.map(r => r === 'vendedor' ? ['vendedor', 'gestionador'] : [r]).flat();
+
+    if (!effectiveRoles.includes(userRole)) {
+        if (userRole === 'superadmin') return <Navigate to="/admin" replace />;
+        return <Navigate to="/" replace />; 
     }
 
     return <Outlet />;
@@ -35,8 +40,9 @@ const AppRoutes: React.FC = () => {
         <Routes>
             {/* Rutas Públicas */}
             <Route path="/catalogo/:tenant_id" element={<PublicCatalog />} />
-
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Rutas exclusivas del SUPERADMIN */}
             <Route element={<RoleRoute allowedRoles={['superadmin']} />}>
@@ -47,14 +53,17 @@ const AppRoutes: React.FC = () => {
                 } />
             </Route>
 
-            {/* Rutas exclusivas del GESTIONADOR */}
-            <Route element={<RoleRoute allowedRoles={['gestionador']} />}>
+            {/* Rutas exclusivas del VENDEDOR (Anteriormente Gestionador) */}
+            <Route element={<RoleRoute allowedRoles={['vendedor']} />}>
                 <Route path="/*" element={
                     <ProtectedRoute>
                         <Dashboard />
                     </ProtectedRoute>
                 } />
             </Route>
+
+            {/* Redirección por defecto */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
     );
 };

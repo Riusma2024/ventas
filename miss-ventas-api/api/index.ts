@@ -274,7 +274,7 @@ app.post('/api/ventas', async (req: any, res: any) => {
 app.get('/api/abonos', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const [rows] = await db.query('SELECT * FROM abonos WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
+        const [rows] = await db.query('SELECT *, cliente_id as clienteId FROM abonos WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });

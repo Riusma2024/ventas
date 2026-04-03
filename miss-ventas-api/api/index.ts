@@ -168,7 +168,7 @@ app.delete('/api/admin/cupones/:id', async (req: any, res: any) => {
 app.get('/api/productos', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const [rows] = await db.query('SELECT * FROM productos WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
+        const [rows] = await db.query('SELECT id, nombre, descripcion, precioSugerido, stock, foto, imagenes, categoria, tenant_id, creado_en FROM productos WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -201,7 +201,7 @@ app.delete('/api/productos/:id', async (req: any, res: any) => {
 app.get('/api/clientes', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const [rows] = await db.query('SELECT * FROM clientes WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
+        const [rows] = await db.query('SELECT id, nombre, apodo, telefono, whatsapp, direccion, deudaTotal, visto, codigo_cliente, tenant_id, creado_en FROM clientes WHERE tenant_id=? ORDER BY creado_en DESC', [p.tenant_id]);
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -234,7 +234,14 @@ app.delete('/api/clientes/:id', async (req: any, res: any) => {
 app.get('/api/ventas', async (req: any, res: any) => {
     const p = getToken(req); if (!p) return res.status(401).json({ error: 'No autorizado' });
     try {
-        const [rows] = await db.query('SELECT v.*, c.nombre as cliente_nombre FROM ventas v LEFT JOIN clientes c ON v.cliente_id=c.id WHERE v.tenant_id=? ORDER BY v.creado_en DESC', [p.tenant_id]);
+        const [rows] = await db.query(`
+            SELECT v.id, v.cliente_id as clienteId, v.total, v.precioVenta, v.utilidad, v.notas, v.estado, v.fecha, v.creado_en, 
+                   c.nombre as cliente_nombre, c.apodo as cliente_apodo 
+            FROM ventas v 
+            LEFT JOIN clientes c ON v.cliente_id=c.id 
+            WHERE v.tenant_id=? 
+            ORDER BY v.creado_en DESC
+        `, [p.tenant_id]);
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });

@@ -102,11 +102,11 @@ app.post('/api/auth/registro', async (req: any, res: any) => {
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
-// GESTIONADORES LIST (admin)
-app.get('/api/users/gestionadores', async (req: any, res: any) => {
+// VENDEDORES LIST (admin)
+app.get('/api/users/vendedores', async (req: any, res: any) => {
     const p = getToken(req); if (!p || p.rol !== 'superadmin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
-        const [rows] = await db.query("SELECT id,nombre,email,creado_en,sub_status,sub_expira_el FROM usuarios WHERE rol IN ('vendedor','gestionador') ORDER BY creado_en DESC");
+        const [rows] = await db.query("SELECT id,nombre,email,creado_en,sub_status,sub_expira_el FROM usuarios WHERE rol='vendedor' ORDER BY creado_en DESC");
         res.json(rows);
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -124,7 +124,7 @@ app.post('/api/users', async (req: any, res: any) => {
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/users/gestionadores/:id', async (req: any, res: any) => {
+app.put('/api/users/vendedores/:id', async (req: any, res: any) => {
     const p = getToken(req); if (!p || p.rol !== 'superadmin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
         const { nombre, email } = req.body || {};
@@ -133,7 +133,7 @@ app.put('/api/users/gestionadores/:id', async (req: any, res: any) => {
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/users/gestionadores/:id', async (req: any, res: any) => {
+app.delete('/api/users/vendedores/:id', async (req: any, res: any) => {
     const p = getToken(req); if (!p || p.rol !== 'superadmin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
         await db.query("DELETE FROM usuarios WHERE id=? AND rol!='superadmin'", [req.params.id]);
@@ -319,10 +319,16 @@ app.put('/api/abonos/:id', async (req: any, res: any) => {
 });
 
 // PUBLIC catalog
-app.get('/api/public/catalogo/:slug', async (req: any, res: any) => {
+app.get('/api/public/catalog/:tenantId', async (req: any, res: any) => {
     try {
-        const [users]: any = await db.query('SELECT id,nombre,tenant_id FROM usuarios WHERE negocio_slug=?', [req.params.slug]);
+        const { tenantId } = req.params;
+        
+        // Buscar usuario por tenant_id numérico o por slug
+        let query = 'SELECT id, nombre, tenant_id FROM usuarios WHERE tenant_id = ? OR negocio_slug = ?';
+        const [users]: any = await db.query(query, [tenantId, tenantId]);
+        
         if (!users.length) return res.status(404).json({ error: 'Catálogo no encontrado' });
+        
         const [productos] = await db.query('SELECT * FROM productos WHERE tenant_id=?', [users[0].tenant_id]);
         res.json({ negocio: users[0].nombre, productos });
     } catch(e: any) { res.status(500).json({ error: e.message }); }

@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 export interface AuthRequest extends Request {
     user?: {
         id: number;
-        rol: 'superadmin' | 'gestionador' | 'vendedor' | 'cliente';
+        rol: 'superadmin' | 'vendedor' | 'cliente';
         tenant_id: number | null;
     };
 }
@@ -39,7 +39,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
 };
 
 // Middleware para restringir acceso por Rol
-export const requireRol = (roles: Array<'superadmin' | 'gestionador' | 'vendedor' | 'cliente'>) => {
+export const requireRol = (roles: Array<'superadmin' | 'vendedor' | 'cliente'>) => {
     return (req: AuthRequest, res: Response, next: NextFunction): void => {
         if (!req.user || !roles.includes(req.user.rol)) {
             res.status(403).json({ error: 'No tienes permisos para esta acción' });

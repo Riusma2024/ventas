@@ -24,10 +24,7 @@ const RoleRoute: React.FC<{ allowedRoles: string[] }> = ({ allowedRoles }) => {
     if (!user) return <Navigate to="/login" replace />;
 
     const userRole = user.rol;
-    // Mapeo temporal si el rol antiguo persiste en el token
-    const effectiveRoles = allowedRoles.map(r => r === 'vendedor' ? ['vendedor', 'gestionador'] : [r]).flat();
-
-    if (!effectiveRoles.includes(userRole)) {
+    if (!allowedRoles.includes(userRole)) {
         if (userRole === 'superadmin') return <Navigate to="/admin" replace />;
         return <Navigate to="/" replace />; 
     }
@@ -53,8 +50,8 @@ const AppRoutes: React.FC = () => {
                 } />
             </Route>
 
-            {/* Rutas exclusivas del VENDEDOR (Anteriormente Gestionador) */}
-            <Route element={<RoleRoute allowedRoles={['vendedor', 'gestionador']} />}>
+            {/* Rutas exclusivas del VENDEDOR */}
+            <Route element={<RoleRoute allowedRoles={['vendedor']} />}>
                 <Route path="/" element={
                     <ProtectedRoute>
                         <Dashboard />

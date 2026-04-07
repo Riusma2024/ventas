@@ -5,6 +5,7 @@ import { AddAbonoForm } from './AddAbonoForm';
 import { EditAbonoForm } from './EditAbonoForm';
 import { useState, useEffect } from 'react';
 import { api } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 interface ClientAccountStatementProps {
     cliente: Cliente;
@@ -13,6 +14,7 @@ interface ClientAccountStatementProps {
 }
 
 export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ cliente, onClose, onSelectProduct }) => {
+    const { user } = useAuth();
     const [isAddAbonoOpen, setIsAddAbonoOpen] = useState(false);
     const [editingAbono, setEditingAbono] = useState<Abono | null>(null);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -135,7 +137,7 @@ export const ClientAccountStatement: React.FC<ClientAccountStatementProps> = ({ 
                                         key={v.id}
                                         onClick={() => {
                                             // ABRIR CATALOGO PÚBLICO
-                                            const url = `${window.location.origin}/catalogo/${v.tenant_id}#producto-${v.productoId}`;
+                                            const url = `${window.location.origin}/catalogo/${v.tenant_id || user?.tenant_id || user?.id}#producto-${v.productoId}`;
                                             window.open(url, '_blank');
                                         }}
                                         className={`bg-slate-50 p-4 rounded-3xl border border-slate-100 flex gap-4 items-center cursor-pointer hover:bg-slate-100 active:scale-[0.98] transition-all group`}

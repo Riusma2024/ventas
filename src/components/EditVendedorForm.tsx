@@ -3,15 +3,15 @@ import { createPortal } from 'react-dom';
 import { X, User, Mail, Lock } from 'lucide-react';
 import { api } from '../config/api';
 
-interface EditGestionadorFormProps {
-    gestionador: any;
+interface EditVendedorFormProps {
+    vendedor: any;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const EditGestionadorForm: React.FC<EditGestionadorFormProps> = ({ gestionador, onClose, onSuccess }) => {
-    const [nombre, setNombre] = useState(gestionador.nombre || '');
-    const [email, setEmail] = useState(gestionador.email || '');
+export const EditVendedorForm: React.FC<EditVendedorFormProps> = ({ vendedor, onClose, onSuccess }) => {
+    const [nombre, setNombre] = useState(vendedor.nombre || '');
+    const [email, setEmail] = useState(vendedor.email || '');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -22,14 +22,14 @@ export const EditGestionadorForm: React.FC<EditGestionadorFormProps> = ({ gestio
         setError(null);
 
         try {
-            await api.put(`/users/gestionadores/${gestionador.id}`, {
+            await api.put(`/users/vendedores/${vendedor.id}`, {
                 nombre,
                 email,
                 password: password || undefined // Only send password if it's changed
             });
             onSuccess();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al actualizar gestionador');
+            setError(err.response?.data?.error || 'Error al actualizar vendedor');
         } finally {
             setLoading(false);
         }
@@ -41,7 +41,7 @@ export const EditGestionadorForm: React.FC<EditGestionadorFormProps> = ({ gestio
 
                 <div className="flex justify-between items-center px-2">
                     <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Editar Gestionador</h3>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Editar Vendedor</h3>
                         <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">Modificar Cuenta de Acceso</p>
                     </div>
                     <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">

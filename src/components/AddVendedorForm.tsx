@@ -3,12 +3,12 @@ import { createPortal } from 'react-dom';
 import { X, User, Mail, Lock } from 'lucide-react';
 import { api } from '../config/api';
 
-interface AddGestionadorFormProps {
+interface AddVendedorFormProps {
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose, onSuccess }) => {
+export const AddVendedorForm: React.FC<AddVendedorFormProps> = ({ onClose, onSuccess }) => {
     const [nombre, setNombre] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -21,14 +21,15 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
         setError(null);
 
         try {
-            await api.post('/users/gestionadores', {
+            await api.post('/users', {
                 nombre,
                 email,
-                password
+                password,
+                rol: 'vendedor'
             });
             onSuccess();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al crear gestionador');
+            setError(err.response?.data?.error || 'Error al crear vendedor');
         } finally {
             setLoading(false);
         }
@@ -40,7 +41,7 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
 
                 <div className="flex justify-between items-center px-2">
                     <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Nuevo Gestionador</h3>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Nuevo Vendedor</h3>
                         <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">Crear cuenta de acceso</p>
                     </div>
                     <button onClick={onClose} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
@@ -106,7 +107,7 @@ export const AddGestionadorForm: React.FC<AddGestionadorFormProps> = ({ onClose,
                         disabled={loading}
                         className="btn-primary w-full shadow-lg shadow-primary-500/30 flex items-center justify-center h-14"
                     >
-                        {loading ? 'Creando...' : 'Crear Gestionador'}
+                        {loading ? 'Creando...' : 'Crear Vendedor'}
                     </button>
                 </form>
 

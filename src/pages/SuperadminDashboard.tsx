@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Users, Plus, UserPlus, Pencil, Trash2, Ticket, Check, X, ShieldCheck } from 'lucide-react';
 import { api } from '../config/api';
-import { AddGestionadorForm } from '../components/AddGestionadorForm';
-import { EditGestionadorForm } from '../components/EditGestionadorForm';
+import { AddVendedorForm } from '../components/AddVendedorForm';
+import { EditVendedorForm } from '../components/EditVendedorForm';
 
 export const SuperadminDashboard: React.FC = () => {
     const { user, logout } = useAuth();
-    const [gestionadores, setGestionadores] = useState<any[]>([]);
+    const [vendedores, setVendedores] = useState<any[]>([]);
     const [cupones, setCupones] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
     const [isAddingCupon, setIsAddingCupon] = useState(false);
-    const [editingGestionador, setEditingGestionador] = useState<any | null>(null);
+    const [editingVendedor, setEditingVendedor] = useState<any | null>(null);
 
     const [newCupon, setNewCupon] = useState({
         codigo: '',
@@ -24,10 +24,10 @@ export const SuperadminDashboard: React.FC = () => {
         setIsLoading(true);
         try {
             const [usersRes, cuponesRes] = await Promise.all([
-                api.get('/users/gestionadores'),
+                api.get('/users/vendedores'),
                 api.get('/admin/cupones')
             ]);
-            setGestionadores(usersRes.data);
+            setVendedores(usersRes.data);
             setCupones(cuponesRes.data);
         } catch (error) {
             console.error('Error al cargar datos:', error);
@@ -42,7 +42,7 @@ export const SuperadminDashboard: React.FC = () => {
 
     const handleDeleteUser = async (id: number, nombre: string) => {
         if (window.confirm(`¿Estás seguro de que deseas eliminar al vendedor ${nombre}?`)) {
-            await api.delete(`/users/gestionadores/${id}`);
+            await api.delete(`/users/vendedores/${id}`);
             loadData();
         }
     };
@@ -100,10 +100,10 @@ export const SuperadminDashboard: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {isLoading ? (
                             <div className="col-span-full py-12 text-center text-slate-400 font-bold">Cargando...</div>
-                        ) : gestionadores.map(g => (
+                        ) : vendedores.map(g => (
                             <div key={g.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 relative group">
                                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setEditingGestionador(g)} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-primary-500 hover:bg-primary-50"><Pencil size={14} /></button>
+                                    <button onClick={() => setEditingVendedor(g)} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-primary-500 hover:bg-primary-50"><Pencil size={14} /></button>
                                     <button onClick={() => handleDeleteUser(g.id, g.nombre)} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50"><Trash2 size={14} /></button>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -197,10 +197,10 @@ export const SuperadminDashboard: React.FC = () => {
             </main>
 
             {isAdding && (
-                <AddGestionadorForm onClose={() => setIsAdding(false)} onSuccess={() => { setIsAdding(false); loadData(); }} />
+                <AddVendedorForm onClose={() => setIsAdding(false)} onSuccess={() => { setIsAdding(false); loadData(); }} />
             )}
-            {editingGestionador && (
-                <EditGestionadorForm gestionador={editingGestionador} onClose={() => setEditingGestionador(null)} onSuccess={() => { setEditingGestionador(null); loadData(); }} />
+            {editingVendedor && (
+                <EditVendedorForm vendedor={editingVendedor} onClose={() => setEditingVendedor(null)} onSuccess={() => { setEditingVendedor(null); loadData(); }} />
             )}
         </div>
     );

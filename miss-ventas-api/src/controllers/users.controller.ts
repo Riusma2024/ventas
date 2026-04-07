@@ -13,7 +13,7 @@ export const crearUsuario = async (req: AuthRequest, res: Response): Promise<voi
         }
 
         let targetTenantId = null;
-        const effectiveRol = (rol === 'gestionador' || rol === 'vendedor') ? 'vendedor' : rol;
+        const effectiveRol = rol; // Ya no necesitamos mapear, usamos el rol recibido directamente
 
         if (effectiveRol === 'vendedor') {
             if (req.user?.rol !== 'superadmin') {
@@ -49,7 +49,7 @@ export const crearUsuario = async (req: AuthRequest, res: Response): Promise<voi
     }
 };
 
-export const getGestionadores = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendedores = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (req.user?.rol !== 'superadmin') {
             res.status(403).json({ error: 'No autorizado' });
@@ -57,7 +57,7 @@ export const getGestionadores = async (req: AuthRequest, res: Response): Promise
         }
 
         const [rows] = await db.query<any[]>(
-            'SELECT id, nombre, email, creado_en, sub_status, sub_expira_el FROM usuarios WHERE rol IN ("vendedor", "gestionador")'
+            'SELECT id, nombre, email, creado_en, sub_status, sub_expira_el FROM usuarios WHERE rol = "vendedor"'
         );
         res.json(rows);
     } catch (error) {
@@ -65,7 +65,7 @@ export const getGestionadores = async (req: AuthRequest, res: Response): Promise
     }
 };
 
-export const updateGestionador = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateVendedor = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (req.user?.rol !== 'superadmin') {
             res.status(403).json({ error: 'No autorizado' });
@@ -92,7 +92,7 @@ export const updateGestionador = async (req: AuthRequest, res: Response): Promis
     }
 };
 
-export const deleteGestionador = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteVendedor = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (req.user?.rol !== 'superadmin') {
             res.status(403).json({ error: 'No autorizado' });

@@ -60,8 +60,8 @@ export const PublicCatalog: React.FC = () => {
         const savedId = localStorage.getItem('missventas_cliente_id');
         try {
             const url = savedId
-                ? `/public/catalogo/${tenant_id}?clienteId=${savedId}`
-                : `/public/catalogo/${tenant_id}`;
+                ? `/public/catalog/${tenant_id}?clienteId=${savedId}`
+                : `/public/catalog/${tenant_id}`;
             const res = await api.get(url);
             setNegocio(res.data.negocio);
             const parsedProducts = res.data.productos.map((p: any) => ({
@@ -97,11 +97,29 @@ export const PublicCatalog: React.FC = () => {
         }
     }, [tenant_id]);
 
+    // Soporte para abrir producto desde el URL (#producto-ID)
+    useEffect(() => {
+        if (productos.length > 0) {
+            const hash = window.location.hash;
+            if (hash.startsWith('#producto-')) {
+                const prodId = parseInt(hash.replace('#producto-', ''));
+                if (!isNaN(prodId)) {
+                    const found = productos.find(p => p.id === prodId);
+                    if (found) {
+                        setSelectedProduct(found);
+                        // Limpiar el hash para que no se reabra si el usuario cierra y navega
+                        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                    }
+                }
+            }
+        }
+    }, [productos]);
+
     const handleLoginWithCode = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoginError(null);
         try {
-            const res = await api.get(`/public/catalogo/${tenant_id}?codigo=${loginCode}`);
+            const res = await api.get(`/public/catalog/${tenant_id}?codigo=${loginCode}`);
             if (res.data.cliente) {
                 setPendingClient(res.data.cliente);
                 setLoginStep('confirm');
@@ -205,7 +223,7 @@ export const PublicCatalog: React.FC = () => {
             setClienteWhatsapp('');
 
             // Actualizar datos del cliente
-            const updated = await api.get(`/public/catalogo/${tenant_id}?clienteId=${newClientId}`);
+            const updated = await api.get(`/public/catalog/${tenant_id}?clienteId=${newClientId}`);
             if (updated.data.cliente) setClienteAuth(updated.data.cliente);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Error al enviar la solicitud');

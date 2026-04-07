@@ -5,7 +5,7 @@ interface User {
     id: number;
     nombre: string;
     email: string;
-    rol: 'superadmin' | 'gestionador' | 'cliente';
+    rol: 'superadmin' | 'vendedor' | 'cliente';
     tenant_id: number | null;
 }
 

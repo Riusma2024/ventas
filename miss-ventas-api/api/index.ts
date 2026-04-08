@@ -322,15 +322,27 @@ app.put('/api/abonos/:id', async (req: any, res: any) => {
 app.get('/api/public/catalog/:tenantId', async (req: any, res: any) => {
     try {
         const { tenantId } = req.params;
+        const { codigo, clienteId } = req.query;
         
-        // Buscar usuario por tenant_id numérico o por slug
+        // Buscar usuario/vendedor por tenant_id numérico o por slug
         let query = 'SELECT id, nombre, tenant_id FROM usuarios WHERE tenant_id = ? OR negocio_slug = ?';
         const [users]: any = await db.query(query, [tenantId, tenantId]);
         
         if (!users.length) return res.status(404).json({ error: 'Catálogo no encontrado' });
         
-        const [productos] = await db.query('SELECT * FROM productos WHERE tenant_id=?', [users[0].tenant_id]);
-        res.json({ negocio: users[0].nombre, productos });
+        const tenant = users[0].tenant_id;
+        const [productos] = await db.query('SELECT * FROM productos WHERE tenant_id=?', [tenant]);
+        
+        let cliente = null;
+        if (codigo) {
+            const [rows]: any = await db.query('SELECT id, nombre, whatsapp FROM clientes WHERE codigo_cliente = ? AND tenant_id = ?', [codigo, tenant]);
+            if (rows.length > 0) cliente = rows[0];
+        } else if (clienteId) {
+            const [rows]: any = await db.query('SELECT id, nombre, whatsapp FROM clientes WHERE id = ? AND tenant_id = ?', [clienteId, tenant]);
+            if (rows.length > 0) cliente = rows[0];
+        }
+
+        res.json({ negocio: users[0].nombre, productos, cliente });
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 

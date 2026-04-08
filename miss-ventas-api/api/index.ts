@@ -349,17 +349,17 @@ app.get('/api/public/catalog/:tenantId', async (req: any, res: any) => {
                 const [abonosRows]: any = await db.query('SELECT * FROM abonos WHERE clienteId = ? AND tenant_id = ? ORDER BY fecha DESC', [cliente.id, tenant]);
                 abonos = abonosRows;
 
-                // Buscar ventas (adquisiciones) con detalles completos del producto
+                // Buscar ventas con alias que el Frontend espera (v.productoNombre, v.productoFoto, etc.)
                 const [ventasRows]: any = await db.query(`
                     SELECT 
                         v.*, 
-                        p.nombre as nombre,
-                        p.precioSugerido,
-                        p.foto,
-                        p.categoria,
-                        p.stock,
-                        p.descripcion,
-                        p.imagenes
+                        p.nombre as productoNombre,
+                        p.precioSugerido as productoPrecioOriginal,
+                        p.foto as productoFoto,
+                        p.categoria as productoCategoria,
+                        p.stock as productoStock,
+                        p.descripcion as productoDescripcion,
+                        p.imagenes as productoImagenes
                     FROM ventas v 
                     LEFT JOIN productos p ON v.productoId = p.id 
                     WHERE v.clienteId = ? AND v.tenant_id = ? 

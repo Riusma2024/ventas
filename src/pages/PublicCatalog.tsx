@@ -71,7 +71,7 @@ export const PublicCatalog: React.FC = () => {
             setProductos(parsedProducts);
             const parsedVentas = (res.data.ventas || []).map((v: any) => ({
                 ...v,
-                imagenes: v.imagenes ? (typeof v.imagenes === 'string' ? JSON.parse(v.imagenes) : v.imagenes) : []
+                productoImagenes: v.productoImagenes ? (typeof v.productoImagenes === 'string' ? JSON.parse(v.productoImagenes) : v.productoImagenes) : []
             }));
 
             if (res.data.cliente) {
@@ -132,7 +132,7 @@ export const PublicCatalog: React.FC = () => {
             if (res.data.cliente) {
                 const parsedVentas = (res.data.ventas || []).map((v: any) => ({
                     ...v,
-                    imagenes: v.imagenes ? (typeof v.imagenes === 'string' ? JSON.parse(v.imagenes) : v.imagenes) : []
+                    productoImagenes: v.productoImagenes ? (typeof v.productoImagenes === 'string' ? JSON.parse(v.productoImagenes) : v.productoImagenes) : []
                 }));
 
                 setPendingClient({

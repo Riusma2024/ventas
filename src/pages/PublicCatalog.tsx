@@ -783,7 +783,7 @@ export const PublicCatalog: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] p-4"
+                            className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] p-4 m-4"
                         >
                             <button
                                 onClick={() => setSelectedProduct(null)}
@@ -792,7 +792,7 @@ export const PublicCatalog: React.FC = () => {
                                 <X size={18} strokeWidth={3} />
                             </button>
 
-                            <div className="flex-1 overflow-y-auto premium-scrollbar px-4 py-4 min-h-0">
+                            <div className="overflow-y-auto overflow-x-hidden premium-scrollbar px-4 py-4">
                                 <div className="relative w-full aspect-square bg-white rounded-[2.5rem] overflow-hidden mb-6 mt-4 shadow-sm border border-slate-50">
                                     {activeModalImage ? (
                                         <img src={activeModalImage} className="w-full h-full object-contain p-4" />

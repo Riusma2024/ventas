@@ -334,15 +334,34 @@ app.get('/api/public/catalog/:tenantId', async (req: any, res: any) => {
         const [productos] = await db.query('SELECT * FROM productos WHERE tenant_id=?', [tenant]);
         
         let cliente = null;
-        if (codigo) {
-            const [rows]: any = await db.query('SELECT id, nombre, whatsapp FROM clientes WHERE codigo_cliente = ? AND tenant_id = ?', [codigo, tenant]);
-            if (rows.length > 0) cliente = rows[0];
-        } else if (clienteId) {
-            const [rows]: any = await db.query('SELECT id, nombre, whatsapp FROM clientes WHERE id = ? AND tenant_id = ?', [clienteId, tenant]);
-            if (rows.length > 0) cliente = rows[0];
+        let abonos = [];
+        let ventas = [];
+
+        if (codigo || clienteId) {
+            const [rows]: any = await db.query(
+                'SELECT id, nombre, whatsapp, deudaTotal FROM clientes WHERE (codigo_cliente = ? OR id = ?) AND tenant_id = ?', 
+                [codigo || null, clienteId || null, tenant]
+            );
+
+            if (rows.length > 0) {
+                cliente = rows[0];
+                // Buscar abonos
+                const [abonosRows]: any = await db.query('SELECT * FROM abonos WHERE clienteId = ? AND tenant_id = ? ORDER BY fecha DESC', [cliente.id, tenant]);
+                abonos = abonosRows;
+
+                // Buscar ventas (adquisiciones)
+                const [ventasRows]: any = await db.query(`
+                    SELECT v.*, p.nombre as producto_nombre 
+                    FROM ventas v 
+                    LEFT JOIN productos p ON v.productoId = p.id 
+                    WHERE v.clienteId = ? AND v.tenant_id = ? 
+                    ORDER BY v.creado_en DESC
+                `, [cliente.id, tenant]);
+                ventas = ventasRows;
+            }
         }
 
-        res.json({ negocio: users[0].nombre, productos, cliente });
+        res.json({ negocio: users[0].nombre, productos, cliente, abonos, ventas });
     } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 

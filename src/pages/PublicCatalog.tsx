@@ -882,7 +882,7 @@ export const PublicCatalog: React.FC = () => {
                                                     setSelectedProduct(null);
                                                 }}
                                                 disabled={selectedProduct.stock <= 0}
-                                                className={`flex-1 h-full rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg ${
+                                                className={`flex-[2] h-full rounded-2xl font-black uppercase tracking-wider text-[11px] flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg px-6 whitespace-nowrap ${
                                                     selectedProduct.stock > 0 
                                                         ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-primary-500/30' 
                                                         : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
@@ -890,7 +890,7 @@ export const PublicCatalog: React.FC = () => {
                                             >
                                                 {selectedProduct.stock > 0 ? (
                                                     <>
-                                                        <ShoppingBag size={18} strokeWidth={3} />
+                                                        <ShoppingBag size={18} strokeWidth={2.5} />
                                                         <span>Añadir al Carrito</span>
                                                     </>
                                                 ) : (

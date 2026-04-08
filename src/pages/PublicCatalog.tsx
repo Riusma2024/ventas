@@ -792,7 +792,7 @@ export const PublicCatalog: React.FC = () => {
                                 <X size={18} strokeWidth={3} />
                             </button>
 
-                            <div className="overflow-y-auto overflow-x-hidden premium-scrollbar px-4 py-2">
+                            <div className="overflow-y-auto overflow-x-hidden premium-scrollbar px-4 my-6 pb-4">
                                 <div className="relative w-full max-h-[380px] aspect-square bg-white rounded-[2.5rem] overflow-hidden mb-6 mt-2 shadow-sm border border-slate-50">
                                     {activeModalImage ? (
                                         <img src={activeModalImage} className="w-full h-full object-contain p-4" alt={selectedProduct.nombre} />

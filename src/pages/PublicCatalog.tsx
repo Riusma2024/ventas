@@ -856,31 +856,48 @@ export const PublicCatalog: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex gap-4 pt-4">
-                                        {selectedProduct.stock > 0 && (
-                                            <div className="flex items-center bg-slate-100 rounded-[2rem] px-4 py-2 border border-slate-200">
-                                                <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.max(1, (prev[selectedProduct.id] || 1) - 1) }))} className="p-3 text-slate-500"><Minus size={20} strokeWidth={3} /></button>
-                                                <span className="w-12 text-center font-black text-xl">{quantities[selectedProduct.id] || 1}</span>
-                                                <button onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.min(selectedProduct.stock, (prev[selectedProduct.id] || 1) + 1) }))} className="p-3 text-slate-500"><Plus size={20} strokeWidth={3} /></button>
-                                            </div>
-                                        )}
-                                        <button
-                                            onClick={() => {
-                                                addToCart(selectedProduct, quantities[selectedProduct.id] || 1);
-                                                setSelectedProduct(null);
-                                            }}
-                                            className={`flex-1 rounded-[2rem] font-black uppercase tracking-wider shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all ${selectedProduct.stock > 0 ? 'bg-primary-500 text-white shadow-primary-500/30' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
-                                            disabled={selectedProduct.stock <= 0}
-                                        >
-                                            {selectedProduct.stock > 0 ? (
-                                                <>
-                                                    <Plus size={24} strokeWidth={3} />
-                                                    Añadir al Carrito
-                                                </>
-                                            ) : (
-                                                'Agotado'
+                                    <div className="flex flex-col gap-4 pt-4 border-t border-slate-50">
+                                        <div className="flex items-center gap-3 h-16">
+                                            {selectedProduct.stock > 0 && (
+                                                <div className="bg-slate-100/80 rounded-2xl flex items-center h-full px-2 border border-slate-100">
+                                                    <button 
+                                                        onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.max(1, (prev[selectedProduct.id] || 1) - 1) }))} 
+                                                        className="p-3 text-slate-500 hover:text-slate-900 transition-colors"
+                                                    >
+                                                        <Minus size={18} strokeWidth={3} />
+                                                    </button>
+                                                    <span className="w-8 text-center font-black text-xl text-slate-900">{quantities[selectedProduct.id] || 1}</span>
+                                                    <button 
+                                                        onClick={() => setQuantities(prev => ({ ...prev, [selectedProduct.id]: Math.min(selectedProduct.stock, (prev[selectedProduct.id] || 1) + 1) }))} 
+                                                        className="p-3 text-slate-500 hover:text-slate-900 transition-colors"
+                                                    >
+                                                        <Plus size={18} strokeWidth={3} />
+                                                    </button>
+                                                </div>
                                             )}
-                                        </button>
+                                            
+                                            <button
+                                                onClick={() => {
+                                                    addToCart(selectedProduct, quantities[selectedProduct.id] || 1);
+                                                    setSelectedProduct(null);
+                                                }}
+                                                disabled={selectedProduct.stock <= 0}
+                                                className={`flex-1 h-full rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg ${
+                                                    selectedProduct.stock > 0 
+                                                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-primary-500/30' 
+                                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                                                }`}
+                                            >
+                                                {selectedProduct.stock > 0 ? (
+                                                    <>
+                                                        <ShoppingBag size={18} strokeWidth={3} />
+                                                        <span>Añadir al Carrito</span>
+                                                    </>
+                                                ) : (
+                                                    'Sin existencias'
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -70,7 +70,11 @@ export const PublicCatalog: React.FC = () => {
             }));
             setProductos(parsedProducts);
             if (res.data.cliente) {
-                setClienteAuth(res.data.cliente);
+                setClienteAuth({
+                    ...res.data.cliente,
+                    abonos: res.data.abonos || [],
+                    ventas: res.data.ventas || []
+                });
             } else {
                 setClienteAuth(null);
             }
@@ -121,7 +125,11 @@ export const PublicCatalog: React.FC = () => {
         try {
             const res = await api.get(`/public/catalog/${tenant_id}?codigo=${loginCode}`);
             if (res.data.cliente) {
-                setPendingClient(res.data.cliente);
+                setPendingClient({
+                    ...res.data.cliente,
+                    abonos: res.data.abonos || [],
+                    ventas: res.data.ventas || []
+                });
                 setLoginStep('confirm');
                 setLoginError(null);
             } else {

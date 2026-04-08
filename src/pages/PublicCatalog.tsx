@@ -69,11 +69,16 @@ export const PublicCatalog: React.FC = () => {
                 imagenes: p.imagenes ? (typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : p.imagenes) : []
             }));
             setProductos(parsedProducts);
+            const parsedVentas = (res.data.ventas || []).map((v: any) => ({
+                ...v,
+                imagenes: v.imagenes ? (typeof v.imagenes === 'string' ? JSON.parse(v.imagenes) : v.imagenes) : []
+            }));
+
             if (res.data.cliente) {
                 setClienteAuth({
                     ...res.data.cliente,
                     abonos: res.data.abonos || [],
-                    ventas: res.data.ventas || []
+                    ventas: parsedVentas
                 });
             } else {
                 setClienteAuth(null);
@@ -125,10 +130,15 @@ export const PublicCatalog: React.FC = () => {
         try {
             const res = await api.get(`/public/catalog/${tenant_id}?codigo=${loginCode}`);
             if (res.data.cliente) {
+                const parsedVentas = (res.data.ventas || []).map((v: any) => ({
+                    ...v,
+                    imagenes: v.imagenes ? (typeof v.imagenes === 'string' ? JSON.parse(v.imagenes) : v.imagenes) : []
+                }));
+
                 setPendingClient({
                     ...res.data.cliente,
                     abonos: res.data.abonos || [],
-                    ventas: res.data.ventas || []
+                    ventas: parsedVentas
                 });
                 setLoginStep('confirm');
                 setLoginError(null);

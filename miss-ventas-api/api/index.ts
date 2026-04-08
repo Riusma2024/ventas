@@ -349,9 +349,17 @@ app.get('/api/public/catalog/:tenantId', async (req: any, res: any) => {
                 const [abonosRows]: any = await db.query('SELECT * FROM abonos WHERE clienteId = ? AND tenant_id = ? ORDER BY fecha DESC', [cliente.id, tenant]);
                 abonos = abonosRows;
 
-                // Buscar ventas (adquisiciones)
+                // Buscar ventas (adquisiciones) con detalles completos del producto
                 const [ventasRows]: any = await db.query(`
-                    SELECT v.*, p.nombre as producto_nombre 
+                    SELECT 
+                        v.*, 
+                        p.nombre as nombre,
+                        p.precioSugerido,
+                        p.foto,
+                        p.categoria,
+                        p.stock,
+                        p.descripcion,
+                        p.imagenes
                     FROM ventas v 
                     LEFT JOIN productos p ON v.productoId = p.id 
                     WHERE v.clienteId = ? AND v.tenant_id = ? 

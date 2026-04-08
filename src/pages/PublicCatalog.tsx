@@ -780,19 +780,19 @@ export const PublicCatalog: React.FC = () => {
                 {selectedProduct && (
                     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[400] flex items-center justify-center p-4">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] overflow-hidden shadow-2xl relative"
+                            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                            className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] p-4"
                         >
                             <button
                                 onClick={() => setSelectedProduct(null)}
-                                className="absolute top-6 right-6 p-2.5 bg-white/90 backdrop-blur-md text-slate-900 rounded-full z-20 shadow-xl hover:scale-110 active:scale-95 transition-all border border-slate-100"
+                                className="absolute top-8 right-8 p-2.5 bg-slate-100/80 backdrop-blur-md text-slate-900 rounded-full z-30 shadow-sm hover:scale-110 active:scale-95 transition-all border border-slate-200"
                             >
                                 <X size={18} strokeWidth={3} />
                             </button>
 
-                            <div className="overflow-y-auto max-h-[85vh] premium-scrollbar px-6 pb-8">
+                            <div className="flex-1 overflow-y-auto premium-scrollbar px-4 py-4 min-h-0">
                                 <div className="relative w-full aspect-square bg-white rounded-[2.5rem] overflow-hidden mb-6 mt-4 shadow-sm border border-slate-50">
                                     {activeModalImage ? (
                                         <img src={activeModalImage} className="w-full h-full object-contain p-4" />

@@ -787,18 +787,18 @@ export const PublicCatalog: React.FC = () => {
                         >
                             <button
                                 onClick={() => setSelectedProduct(null)}
-                                className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md text-slate-900 rounded-3xl z-20 shadow-lg active:scale-95 transition-all"
+                                className="absolute top-6 right-6 p-2.5 bg-white/90 backdrop-blur-md text-slate-900 rounded-full z-20 shadow-xl hover:scale-110 active:scale-95 transition-all border border-slate-100"
                             >
-                                <X size={24} strokeWidth={3} />
+                                <X size={18} strokeWidth={3} />
                             </button>
 
-                            <div className="overflow-y-auto max-h-[90vh] premium-scrollbar">
-                                <div className="relative w-full aspect-square bg-slate-100">
+                            <div className="overflow-y-auto max-h-[85vh] premium-scrollbar px-6 pb-8">
+                                <div className="relative w-full aspect-square bg-white rounded-[2.5rem] overflow-hidden mb-6 mt-4 shadow-sm border border-slate-50">
                                     {activeModalImage ? (
-                                        <img src={activeModalImage} className="w-full h-full object-contain" />
+                                        <img src={activeModalImage} className="w-full h-full object-contain p-4" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                            <ShoppingBag size={80} />
+                                            <ShoppingBag size={48} />
                                         </div>
                                     )}
 
@@ -848,9 +848,9 @@ export const PublicCatalog: React.FC = () => {
                                     </div>
 
                                     {selectedProduct.descripcion && (
-                                        <div className="space-y-2">
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</h4>
-                                            <p className="text-slate-600 font-medium leading-relaxed bg-slate-50 p-6 rounded-[2rem]">
+                                        <div className="bg-slate-50/80 rounded-[2rem] p-6 border border-slate-100">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Descripción</span>
+                                            <p className="text-slate-600 text-sm leading-relaxed font-medium leading-relaxed">
                                                 {selectedProduct.descripcion}
                                             </p>
                                         </div>

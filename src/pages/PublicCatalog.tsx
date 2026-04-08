@@ -778,7 +778,7 @@ export const PublicCatalog: React.FC = () => {
             {/* Product Detail Modal */}
             <AnimatePresence>
                 {selectedProduct && (
-                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[400] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -891,7 +891,7 @@ export const PublicCatalog: React.FC = () => {
 
             {zoomedEvidence && (
                 <div 
-                    className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[300] flex items-center justify-center p-4 cursor-zoom-out animate-zoom-in"
+                    className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[500] flex items-center justify-center p-4 cursor-zoom-out animate-zoom-in"
                     onClick={() => setZoomedEvidence(null)}
                 >
                     <div className="relative w-full max-w-2xl animate-fade-in">

@@ -540,9 +540,14 @@ export const PublicCatalog: React.FC = () => {
             )}
 
             {isProfileModalOpen && clienteAuth && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2.5rem] p-6 max-md w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2.5 bg-slate-900 text-white rounded-2xl shadow-lg hover:scale-110 active:scale-95 transition-all z-10"><X size={24} strokeWidth={3} /></button>
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                        className="bg-white rounded-[3.5rem] p-8 max-w-md w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] mx-auto"
+                    >
+                        <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-6 right-6 p-2 bg-slate-100 text-slate-900 rounded-full hover:bg-slate-200 transition-colors z-[310]"><X size={20} /></button>
 
                         {/* Header Personal */}
                         <div className="text-center pt-4 mb-6 sticky top-0 bg-white">
@@ -689,7 +694,7 @@ export const PublicCatalog: React.FC = () => {
                                 Cerrar Sesión / No soy {clienteAuth.nombre.split(' ')[0]}
                             </button>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             )}
 
@@ -778,7 +783,7 @@ export const PublicCatalog: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white w-full max-w-lg rounded-[3.5rem] overflow-hidden shadow-2xl relative"
+                            className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] overflow-hidden shadow-2xl relative"
                         >
                             <button
                                 onClick={() => setSelectedProduct(null)}
